@@ -2,169 +2,99 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b82f6"><link rel="manifest" href="manifest.json">
-<title>Мой дом — Нальчик</title>
+<meta name="theme-color" content="#0b82f6"><title>Мой дом — Нальчик v0.3</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f7fb;color:#10243e}button,input{font:inherit}button{cursor:pointer;border:0}.app{max-width:520px;margin:auto;min-height:100vh;background:#f7f9fc}.top{padding:22px 18px 12px;background:white;position:sticky;top:0;z-index:3;border-bottom:1px solid #e7edf5}.brand{font-size:23px;font-weight:800}.sub{font-size:13px;color:#6d7d91;margin-top:4px}.content{padding:16px 16px 92px}.card{background:white;border-radius:18px;padding:16px;margin-bottom:13px;box-shadow:0 3px 16px #163a5a0d}.address{background:linear-gradient(135deg,#087ff1,#42a5ff);color:white}.address .small{opacity:.8;font-size:12px}.address h2{margin:5px 0 2px;font-size:20px}.address p{margin:0;opacity:.9}.amount{font-size:32px;font-weight:800;margin:8px 0}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #edf1f6}.row:last-child{border-bottom:0}.icon{width:38px;height:38px;border-radius:12px;background:#eaf4ff;display:grid;place-items:center;font-size:19px;flex:none}.grow{flex:1}.muted{color:#77869a;font-size:12px}.title{font-weight:700}.btn{background:#087ff1;color:#fff;border-radius:12px;padding:11px 15px;font-weight:700}.btn.secondary{background:#edf5ff;color:#0874d8}.btn.block{width:100%;margin-top:10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini{padding:14px;border-radius:14px;background:#f5f8fc}.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);background:white;border-top:1px solid #e4eaf2;display:grid;grid-template-columns:repeat(5,1fr);padding:7px 6px calc(7px + env(safe-area-inset-bottom));z-index:5}.nav button{background:none;color:#7b8a9d;font-size:10px}.nav button.active{color:#087ff1;font-weight:700}.nav .ni{font-size:20px;display:block}.section{display:none}.section.active{display:block}.input{width:100%;padding:12px;border:1px solid #dce5ef;border-radius:12px;outline:none}.notice{background:#fff8df;border:1px solid #ffe49a;color:#7a5a00;padding:12px;border-radius:13px;font-size:13px}.success{background:#eaf9f0;color:#197345;padding:10px;border-radius:10px;font-size:13px}.tag{font-size:11px;background:#edf5ff;color:#0874d8;padding:5px 8px;border-radius:20px}.back{background:none;color:#087ff1;padding:0;margin-bottom:12px;font-weight:700}.modal{display:none;position:fixed;inset:0;background:#0006;z-index:10;align-items:flex-end}.modal.show{display:flex}.sheet{background:white;width:100%;max-width:520px;margin:auto;border-radius:22px 22px 0 0;padding:20px}.sheet h3{margin-top:0}.chat{height:270px;overflow:auto;background:#f5f8fc;border-radius:14px;padding:12px}.msg{max-width:85%;padding:10px 12px;border-radius:14px;margin:7px 0;font-size:13px}.user{background:#087ff1;color:white;margin-left:auto}.ai{background:white}.pill{display:inline-block;margin:3px 4px 3px 0}.footnote{font-size:11px;color:#8a98a9;line-height:1.4}
-.modal.center{align-items:center;padding:16px}.modal.center .sheet{border-radius:22px;max-height:90vh;overflow:auto}
-.formlabel{display:block;font-size:12px;font-weight:700;color:#66788c;margin:10px 0 5px}
-.actions{display:flex;gap:8px;margin-top:12px}.actions .btn{flex:1}
-.account-actions{display:flex;gap:6px;margin-top:8px}.account-actions button{padding:7px 9px;border-radius:9px;background:#edf5ff;color:#0874d8;font-size:12px}
-.danger{background:#fff0f0!important;color:#c53b3b!important}
-
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f7fb;color:#10243e}button,input,select{font:inherit}button{cursor:pointer;border:0}.app{max-width:520px;margin:auto;min-height:100vh;background:#f7f9fc}.top{padding:22px 18px 12px;background:white;position:sticky;top:0;z-index:3;border-bottom:1px solid #e7edf5}.brand{font-size:23px;font-weight:800}.sub{font-size:13px;color:#6d7d91;margin-top:4px}.content{padding:16px 16px 92px}.card{background:white;border-radius:18px;padding:16px;margin-bottom:13px;box-shadow:0 3px 16px #163a5a0d}.address{background:linear-gradient(135deg,#087ff1,#42a5ff);color:white}.address .small{opacity:.8;font-size:12px}.address h2{margin:5px 0 2px;font-size:20px}.address p{margin:0;opacity:.9}.amount{font-size:32px;font-weight:800;margin:8px 0}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #edf1f6}.row:last-child{border-bottom:0}.icon{width:38px;height:38px;border-radius:12px;background:#eaf4ff;display:grid;place-items:center;font-size:19px;flex:none}.grow{flex:1}.muted{color:#77869a;font-size:12px}.title{font-weight:700}.btn{background:#087ff1;color:#fff;border-radius:12px;padding:11px 15px;font-weight:700}.btn.secondary{background:#edf5ff;color:#0874d8}.btn.block{width:100%;margin-top:10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini{padding:14px;border-radius:14px;background:#f5f8fc}.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);background:white;border-top:1px solid #e4eaf2;display:grid;grid-template-columns:repeat(5,1fr);padding:7px 6px calc(7px + env(safe-area-inset-bottom));z-index:5}.nav button{background:none;color:#7b8a9d;font-size:10px}.nav button.active{color:#087ff1;font-weight:700}.nav .ni{font-size:20px;display:block}.section{display:none}.section.active{display:block}.input{width:100%;padding:12px;border:1px solid #dce5ef;border-radius:12px;outline:none}.notice{background:#fff8df;border:1px solid #ffe49a;color:#7a5a00;padding:12px;border-radius:13px;font-size:13px}.success{background:#eaf9f0;color:#197345;padding:10px;border-radius:10px;font-size:13px}.tag{font-size:11px;background:#edf5ff;color:#0874d8;padding:5px 8px;border-radius:20px}.back{background:none;color:#087ff1;padding:0;margin-bottom:12px;font-weight:700}.modal{display:none;position:fixed;inset:0;background:#0006;z-index:10;align-items:flex-end}.modal.show{display:flex}.sheet{background:white;width:100%;max-width:520px;margin:auto;border-radius:22px 22px 0 0;padding:20px}.sheet h3{margin-top:0}.modal.center{align-items:center;padding:16px}.modal.center .sheet{border-radius:22px;max-height:92vh;overflow:auto}.formlabel{display:block;font-size:12px;font-weight:700;color:#66788c;margin:10px 0 5px}.actions{display:flex;gap:8px;margin-top:12px}.actions .btn{flex:1}.account-actions{display:flex;gap:6px;margin-top:8px}.account-actions button{padding:7px 9px;border-radius:9px;background:#edf5ff;color:#0874d8;font-size:12px}.danger{background:#fff0f0!important;color:#c53b3b!important}.suggestions{border:1px solid #dce5ef;border-radius:12px;margin-top:6px;overflow:hidden;background:#fff}.suggestion{padding:11px 12px;border-bottom:1px solid #edf1f6;cursor:pointer}.suggestion:last-child{border-bottom:0}.suggestion small{display:block;color:#8a98a9;margin-top:2px}.photo-box{border:2px dashed #cbd9e8;border-radius:16px;padding:22px;text-align:center;background:#f8fbff}.photo-box input{display:none}.preview{max-width:100%;max-height:260px;border-radius:12px;margin-top:12px}.ocr{background:#f5f8fc;border-radius:13px;padding:12px;white-space:pre-wrap;font-size:12px;max-height:180px;overflow:auto}.field{padding:10px 0;border-bottom:1px solid #edf1f6}.field b{display:block;font-size:12px;color:#6c7d91;margin-bottom:4px}.footnote{font-size:11px;color:#8a98a9;line-height:1.4}.empty{text-align:center;padding:18px;color:#77869a}.chat{height:270px;overflow:auto;background:#f5f8fc;border-radius:14px;padding:12px}.msg{max-width:85%;padding:10px 12px;border-radius:14px;margin:7px 0;font-size:13px}.user{background:#087ff1;color:white;margin-left:auto}.ai{background:white}.loading{display:inline-block;padding:8px 12px;background:#fff;border-radius:12px}.source{font-size:11px;color:#8291a3;margin-top:6px}.badge-ok{color:#197345;background:#eaf9f0}.badge-warn{color:#7a5a00;background:#fff8df}.badge{font-size:11px;padding:4px 7px;border-radius:10px;display:inline-block}
 </style></head>
 <body><div class="app">
-<div class="top"><div class="brand">🏠 Мой дом — Нальчик</div><div class="sub">Все услуги ЖКХ — в одном месте</div></div>
+<div class="top"><div class="brand">🏠 Мой дом — Нальчик</div><div class="sub">Ваш дом, услуги и квитанции — в одном месте</div></div>
 <div class="content">
 <section id="home" class="section active">
-<div class="card address">
-<div class="small">Ваш адрес</div>
-<h2 id="addressTitle">ул. Фурманова, 12-в</h2>
-<p id="apartmentTitle">Квартира 47 · Нальчик</p>
-<button class="btn" style="margin-top:12px;background:#ffffff;color:#0874d8" onclick="openAddress()">Изменить адрес</button>
-</div>
-<div class="card"><div class="muted">Общая задолженность</div><div class="amount">2 864 ₽</div><div class="muted">К оплате в этом месяце: <b>7 842 ₽</b></div><button class="btn block" onclick="go('bills')">Оплатить всё</button></div>
-<div class="card"><div class="title">Быстрые действия</div><div class="grid" style="margin-top:10px"><button class="mini" onclick="go('meters')">💧<br><b>Показания</b></button><button class="mini" onclick="go('issues')">📝<br><b>Обращение</b></button><button class="mini" onclick="go('homeinfo')">🏢<br><b>Мой дом</b></button><button class="mini" onclick="openAI()">🤖<br><b>Спросить AI</b></button></div></div>
-<div class="card"><div class="title">Скоро передать показания</div><div class="notice" style="margin-top:10px">💧 Вода · до 3 числа следующего месяца<br><b>Осталось 3 дня</b></div></div>
+<div class="card address"><div class="small">Ваш адрес</div><h2 id="addressTitle">Адрес не выбран</h2><p id="apartmentTitle">Выберите дом и квартиру</p><button class="btn" style="margin-top:12px;background:#fff;color:#0874d8" onclick="openAddress()">📍 Выбрать адрес</button></div>
+<div id="homeStatus" class="card"><div class="title">Начнём с ваших данных</div><p class="muted">Выберите адрес. Затем приложение покажет найденную управляющую организацию и позволит добавить ваши лицевые счета.</p><button class="btn block" onclick="openAddress()">Выбрать мой дом</button></div>
+<div class="card"><div class="title">Быстрые действия</div><div class="grid" style="margin-top:10px"><button class="mini" onclick="go('accounts')">💳<br><b>Лицевые счета</b></button><button class="mini" onclick="go('receipts')">📷<br><b>Квитанция</b></button><button class="mini" onclick="go('homeinfo')">🏢<br><b>Мой дом</b></button><button class="mini" onclick="openAI()">🤖<br><b>Спросить AI</b></button></div></div>
 </section>
-<section id="bills" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="muted">Октябрь 2026</div><div class="amount">7 842 ₽</div><button class="btn block" onclick="alert('В v0.1 здесь будет переход к оплате. Платёжная интеграция подключается позже.')">Оплатить всё</button></div><div class="card" id="billList"></div></section>
-<section id="meters" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Показания счётчиков</div><div class="notice" style="margin-top:10px">Срок передачи: с 15-го числа текущего месяца по 3-е число следующего.</div><div class="row"><div class="icon">💧</div><div class="grow"><div class="title">Водоснабжение</div><div class="muted">Последнее: 124,3 м³</div></div><input id="water" class="input" style="max-width:120px" value="123,8"></div><button class="btn block" onclick="submitMeter()">Передать показания</button><div id="meterStatus" style="margin-top:10px"></div></div></section>
-<section id="issues" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мои обращения</div><button class="btn block" onclick="newIssue()">＋ Создать обращение</button></div><div class="card"><div class="row"><div class="grow"><div class="title">Нет горячей воды</div><div class="muted">14.10.2026 · УК «Перспектива»</div></div><span class="tag">В работе</span></div><div class="row"><div class="grow"><div class="title">Протечка в подъезде</div><div class="muted">10.10.2026 · УК «Перспектива»</div></div><span class="tag" style="background:#eaf9f0;color:#197345">Решено</span></div></div></section>
-<section id="homeinfo" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мой дом</div><h2 id="homeAddressTitle" style="margin-bottom:4px">ул. Фурманова, 12-в</h2><div id="homeApartmentTitle" class="muted">Нальчик · квартира 47</div></div><div class="card"><div class="title">Управляющая организация</div><div class="row"><div class="icon">🏢</div><div class="grow"><b>ООО УК «Перспектива»</b><div class="muted">Контакты и аварийная служба</div></div><button class="btn secondary" onclick="alert('Телефон УК будет добавлен после проверки актуальных контактов.')">→</button></div></div><div class="card"><div class="title">Лицевые счета</div><p class="muted">Счета можно изменить и добавить свои.</p><button class="btn secondary block" onclick="go('accounts')">Открыть лицевые счета</button></div><div class="card"><div class="title">Поставщики услуг</div><div class="row"><div class="icon">💧</div><div class="grow"><b>Водоснабжение</b><div class="muted">Водоканал</div></div></div><div class="row"><div class="icon">🔥</div><div class="grow"><b>Теплоснабжение</b><div class="muted">Нальчикская теплоснабжающая компания</div></div></div><div class="row"><div class="icon">🔵</div><div class="grow"><b>Газ</b><div class="muted">Газпром межрегионгаз Нальчик</div></div></div><div class="row"><div class="icon">♻️</div><div class="grow"><b>Капремонт</b><div class="muted">Региональный оператор</div></div></div></div></section>
-<section id="accounts" class="section">
-<button class="back" onclick="go('home')">← Главная</button>
-<div class="card">
-<div class="title">Лицевые счета</div>
-<p class="muted">Добавляйте реальные номера счетов для тестирования. Данные сохраняются в браузере на этом устройстве.</p>
-<div id="accountsList"></div>
-<button class="btn block" onclick="openAccount()">＋ Добавить лицевой счёт</button>
+<section id="bills" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мои начисления</div><p class="muted">Здесь появятся данные после загрузки квитанции или подключения поставщика. Тестовой задолженности нет.</p></div><div id="billList"></div></section>
+<section id="meters" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Показания счётчиков</div><p class="muted">В v0.3 сохраняем введённые показания локально. Прямая отправка поставщику появится после интеграции.</p><label class="formlabel">Вода, м³</label><input id="water" class="input" placeholder="Введите показание"><button class="btn block" onclick="saveMeter()">Сохранить показание</button><div id="meterStatus" style="margin-top:10px"></div></div></section>
+<section id="issues" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мои обращения</div><p class="muted">В демо пока нет готовых обращений. Позже они будут привязываться к вашей УК/поставщику.</p><button class="btn block" onclick="newIssue()">＋ Создать обращение</button></div></section>
+<section id="homeinfo" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мой дом</div><h2 id="homeAddressTitle" style="margin-bottom:4px">Адрес не выбран</h2><div id="homeApartmentTitle" class="muted">—</div></div><div class="card" id="orgCard"></div><div class="card"><div class="title">Лицевые счета</div><p class="muted">Только ваши номера. Тестовых счетов больше нет.</p><button class="btn secondary block" onclick="go('accounts')">Открыть лицевые счета</button></div><div class="card" id="providersCard"><div class="title">Поставщики услуг</div><p class="muted">Сведения появятся после определения организаций для выбранного дома.</p></div></section>
+<section id="accounts" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мои лицевые счета</div><p class="muted">Введите реальные номера счетов. Они сохраняются только в браузере этого устройства.</p><div id="accountsList"></div><button class="btn block" onclick="openAccount()">＋ Добавить лицевой счёт</button></div><div class="card"><div class="title">Быстрый способ</div><p class="muted">Можно не вводить номер вручную: загрузите квитанцию, и приложение попробует распознать лицевой счёт.</p><button class="btn secondary block" onclick="go('receipts')">📷 Распознать квитанцию</button></div></section>
+<section id="receipts" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">📷 Квитанция</div><p class="muted">Загрузите фото или изображение квитанции. Распознавание выполняется в браузере; перед сохранением вы проверяете найденные данные.</p><div class="photo-box"><label for="receiptFile"><b>Нажмите, чтобы выбрать фото</b><br><span class="muted">JPG, PNG — лучше снимок без бликов</span></label><input id="receiptFile" type="file" accept="image/*" onchange="loadReceipt(event)"><img id="receiptPreview" class="preview" style="display:none"></div><button id="ocrBtn" class="btn block" style="display:none" onclick="recognizeReceipt()">🔎 Распознать квитанцию</button><div id="ocrStatus" style="margin-top:10px"></div><div id="receiptResult" style="display:none;margin-top:12px"></div></div><div class="card"><div class="footnote">Важно: распознавание в этом прототипе является предварительным. Всегда проверяйте лицевой счёт, сумму и период по оригиналу квитанции.</div></div></section>
 </div>
-<div class="card"><div class="footnote">Это демонстрационный прототип: номера счетов никуда не отправляются и не используются для реальных платежей.</div></div>
-</section>
-</div>
-<div class="nav"><button class="active" data-go="home" onclick="go('home')"><span class="ni">⌂</span>Главная</button><button data-go="bills" onclick="go('bills')"><span class="ni">▤</span>Начисления</button><button data-go="meters" onclick="go('meters')"><span class="ni">♒</span>Показания</button><button data-go="issues" onclick="go('issues')"><span class="ni">✓</span>Обращения</button><button data-go="homeinfo" onclick="go('homeinfo')"><span class="ni">•••</span>Ещё</button></div>
-</div>
-<div id="addressModal" class="modal center">
-<div class="sheet">
-<h3>📍 Изменить адрес</h3>
-<label class="formlabel">Улица и дом</label>
-<input id="addressInput" class="input" placeholder="Например: ул. Мальбахова, 121">
-<label class="formlabel">Квартира</label>
-<input id="apartmentInput" class="input" placeholder="Например: 47">
-<div class="actions"><button class="btn secondary" onclick="closeAddress()">Отмена</button><button class="btn" onclick="saveAddress()">Сохранить</button></div>
-</div></div>
+<div class="nav"><button class="active" data-go="home" onclick="go('home')"><span class="ni">⌂</span>Главная</button><button data-go="bills" onclick="go('bills')"><span class="ni">▤</span>Начисления</button><button data-go="meters" onclick="go('meters')"><span class="ni">♒</span>Показания</button><button data-go="issues" onclick="go('issues')"><span class="ni">✓</span>Обращения</button><button data-go="homeinfo" onclick="go('homeinfo')"><span class="ni">•••</span>Ещё</button></div></div>
 
-<div id="accountModal" class="modal center">
-<div class="sheet">
-<h3>➕ Лицевой счёт</h3>
-<label class="formlabel">Организация</label>
-<select id="accountProvider" class="input">
-<option>Водоканал</option><option>Нальчикская теплоснабжающая компания</option><option>Газпром межрегионгаз</option><option>Капремонт</option><option>Управляющая компания</option><option>Другое</option>
-</select>
-<label class="formlabel">Номер лицевого счёта</label>
-<input id="accountNumber" class="input" inputmode="numeric" placeholder="Например: 123456789">
-<div class="actions"><button class="btn secondary" onclick="closeAccount()">Отмена</button><button class="btn" onclick="saveAccount()">Добавить</button></div>
-</div></div>
+<div id="addressModal" class="modal center"><div class="sheet"><h3>📍 Выберите адрес</h3><div class="notice">Начните вводить название улицы. Мы будем подсказывать варианты из локальной базы Нальчика.</div><label class="formlabel">Улица</label><input id="streetInput" class="input" placeholder="Например, Мальбахова" autocomplete="off" oninput="suggestStreets()"><div id="streetSuggestions"></div><label class="formlabel">Дом</label><select id="houseSelect" class="input" onchange="selectHouse()"><option value="">Сначала выберите улицу</option></select><div id="houseHint" class="muted" style="margin-top:6px"></div><label class="formlabel">Квартира</label><input id="apartmentInput" class="input" inputmode="numeric" placeholder="Например: 47"><div id="orgPreview" style="margin-top:12px"></div><div class="actions"><button class="btn secondary" onclick="closeAddress()">Отмена</button><button class="btn" onclick="saveAddress()">Сохранить</button></div></div></div>
+<div id="accountModal" class="modal center"><div class="sheet"><h3>➕ Лицевой счёт</h3><label class="formlabel">Организация</label><select id="accountProvider" class="input"><option>Водоканал</option><option>Нальчикская теплоснабжающая компания</option><option>Газпром межрегионгаз</option><option>Капремонт</option><option>Управляющая компания</option><option>Другое</option></select><label class="formlabel">Номер лицевого счёта</label><input id="accountNumber" class="input" inputmode="numeric" placeholder="Введите ваш номер"><div class="actions"><button class="btn secondary" onclick="closeAccount()">Отмена</button><button class="btn" onclick="saveAccount()">Сохранить</button></div></div></div>
+<div id="modal" class="modal"><div class="sheet"><h3>🤖 AI-помощник</h3><div id="chat" class="chat"><div class="msg ai">Здравствуйте! Я помогу разобраться с данными вашего дома и квитанциями. В этой версии ответы демонстрационные.</div></div><div style="display:flex;gap:8px;margin-top:10px"><input id="q" class="input" placeholder="Например: что означает пеня?"><button class="btn" onclick="askAI()">→</button></div><button class="back" style="margin-top:12px" onclick="closeAI()">Закрыть</button></div></div>
 
-<div id="modal" class="modal"><div class="sheet"><h3>🤖 AI-помощник</h3><div id="chat" class="chat"><div class="msg ai">Здравствуйте! Я помогу разобраться с начислениями и проблемами ЖКХ по вашему дому.</div></div><div style="display:flex;gap:8px;margin-top:10px"><input id="q" class="input" placeholder="Например: почему выросла сумма?"><button class="btn" onclick="askAI()">→</button></div><button class="back" style="margin-top:12px" onclick="closeAI()">Закрыть</button></div></div>
 <script>
-const bills=[['💧','Водоснабжение','1 243 ₽'],['🔥','Отопление','2 864 ₽'],['🔵','Газоснабжение','735 ₽'],['🏠','Содержание и ремонт','2 410 ₽'],['♻️','Капитальный ремонт','590 ₽']];
-function go(id){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.go===id));scrollTo(0,0)}
-document.getElementById('billList').innerHTML=bills.map(x=>`<div class="row"><div class="icon">${x[0]}</div><div class="grow"><div class="title">${x[1]}</div><div class="muted">Лицевой счёт: будет добавлен</div></div><b>${x[2]}</b></div>`).join('');
-const defaultAccounts=[
- ['💧','Водоканал','123456'],
- ['🔥','Нальчикская теплоснабжающая компания','234567'],
- ['🔵','Газпром межрегионгаз','345678']
+/* Локальная стартовая база домов Нальчика. Архитектура готова для полной выгрузки ГАР + ГИС ЖКХ. */
+const houseDB=[
+ {street:'Ашурова',houses:['32','36','38'],org:'ООО «Экологистика»'},
+ {street:'Б. Хмельницкого',houses:['27','39','41','43'],org:'ООО УК «Перспектива»'},
+ {street:'Мусова',houses:['33'],org:'ООО УК «Парус»'},
+ {street:'Хужокова',houses:['35-а','145','145-б','145-г','145-д'],org:'ООО УК «Парус»'},
+ {street:'Кооперативный',houses:['3','5'],org:'УК «Эстетика»'},
+ {street:'Мальбахова',houses:['17','21а','115','121'],org:'ООО УК «ИДАР»'},
+ {street:'Гагарина',houses:['18/1','20'],org:'ООО УК «Эстетика»'},
+ {street:'Самотечная',houses:['31'],org:'ООО УК «Эстетика»'},
+ {street:'Фучика',houses:['4'],org:'ООО УК «Эстетика»'},
+ {street:'Чернышевского',houses:['218'],org:'ООО УК «Эстетика»'},
+ {street:'Шалушкинская',houses:['3'],org:'ООО УК «Эстетика»'},
+ {street:'Щаденко',houses:['20-а'],org:'ООО УК «Эстетика»'},
+ {street:'Тельмана',houses:['2-а'],org:'ООО УК «Эстетика»'},
+ {street:'Ленина',houses:['1-в','29','47','49'],org:'ООО УК «Эстетика»'},
+ {street:'Тарчокова',houses:['19-а','19-ж','25-б','54-б','125 лит. Б'],org:'ООО УК «Квартал»'},
+ {street:'Ватутина',houses:['29-а'],org:'ООО УК «Эстетика»'},
+ {street:'2 Таманской Дивизии',houses:['31/1','31/2','31/3'],org:'ООО УК «Эстетика»'},
+ {street:'Горького',houses:['3','29','74'],org:'ООО УК «Эстетика»'},
+ {street:'К. Цеткин',houses:['77'],org:'ООО УК «Эстетика»'},
+ {street:'Корчагина',houses:['2-а'],org:'ООО УК «Эстетика»'},
+ {street:'Идарова',houses:['2','2-а','4','40','40-а','40-б'],org:'ООО УК «Эстетика»'},
+ {street:'Солнечная',houses:['10 корп. 1','10 корп. 3','10 корп. 6','10 корп. 7','10 корп. 8','10 корп. 9','12 корп. 1'],org:'ООО УК «Эстетика»'},
+ {street:'Фурманова',houses:['12а','12б','12в'],org:'ООО ЖЭУК «Очаг»'},
+ {street:'Головко',houses:['12-а','20','91','97','99'],org:'ООО УК «Горный»'},
+ {street:'Кулиева',houses:['36'],org:'ООО УК «Горный»'},
+ {street:'Калинина',houses:['75'],org:'ООО УК «Горный»'},
+ {street:'Калмыкова',houses:['231','235-а','241'],org:'ООО УК «Бастион»'},
+ {street:'Бр. Кушховых',houses:['15','132'],org:'ООО УК «Бастион»'}
 ];
-
-let savedAddress=JSON.parse(localStorage.getItem('mydomAddress')||'null')||{
- street:'ул. Фурманова, 12-в', apartment:'47'
-};
-let accounts=JSON.parse(localStorage.getItem('mydomAccounts')||'null')||defaultAccounts;
-
-const icons={
- 'Водоканал':'💧',
- 'Нальчикская теплоснабжающая компания':'🔥',
- 'Газпром межрегионгаз':'🔵',
- 'Капремонт':'♻️',
- 'Управляющая компания':'🏢',
- 'Другое':'🏠'
-};
-
-function saveLocal(){
- localStorage.setItem('mydomAddress',JSON.stringify(savedAddress));
- localStorage.setItem('mydomAccounts',JSON.stringify(accounts));
-}
-
-function renderAddress(){
- document.getElementById('addressTitle').textContent=savedAddress.street;
- document.getElementById('apartmentTitle').textContent='Квартира '+savedAddress.apartment+' · Нальчик';
- document.getElementById('homeAddressTitle').textContent=savedAddress.street;
- document.getElementById('homeApartmentTitle').textContent='Нальчик · квартира '+savedAddress.apartment;
-}
-
-function openAddress(){
- document.getElementById('addressInput').value=savedAddress.street;
- document.getElementById('apartmentInput').value=savedAddress.apartment;
- document.getElementById('addressModal').classList.add('show');
-}
+const icons={'Водоканал':'💧','Нальчикская теплоснабжающая компания':'🔥','Газпром межрегионгаз':'🔵','Капремонт':'♻️','Управляющая компания':'🏢','Другое':'🏠'};
+let savedAddress=JSON.parse(localStorage.getItem('mydomAddress')||'null');
+let accounts=JSON.parse(localStorage.getItem('mydomAccounts')||'[]');
+let selectedHouse=null, receiptImage=null;
+function go(id){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.go===id));scrollTo(0,0)}
+function dbStreets(){return [...new Set(houseDB.map(x=>x.street))].sort((a,b)=>a.localeCompare(b,'ru'))}
+function findStreet(name){return houseDB.find(x=>x.street===name)}
+function normalize(s){return s.toLowerCase().replace(/^ул\.\s*/,'').replaceAll('ё','е').trim()}
+function openAddress(){document.getElementById('streetInput').value=savedAddress?savedAddress.street.replace(/^ул\.\s*/,''):'';document.getElementById('apartmentInput').value=savedAddress?savedAddress.apartment:'';document.getElementById('addressModal').classList.add('show');suggestStreets();if(savedAddress){const street=houseDB.find(x=>normalize(x.street)===normalize(savedAddress.street));if(street){fillHouses(street);document.getElementById('houseSelect').value=savedAddress.house||'';selectedHouse=street;renderOrgPreview();}}}
 function closeAddress(){document.getElementById('addressModal').classList.remove('show')}
-function saveAddress(){
- const street=document.getElementById('addressInput').value.trim();
- const apartment=document.getElementById('apartmentInput').value.trim();
- if(!street||!apartment){alert('Заполните адрес и номер квартиры.');return}
- savedAddress={street,apartment};
- saveLocal(); renderAddress(); closeAddress();
-}
-
-function renderAccounts(){
- const list=document.getElementById('accountsList');
- if(!accounts.length){
-   list.innerHTML='<div class="notice" style="margin:12px 0">Пока нет добавленных лицевых счетов.</div>';
-   return;
- }
- list.innerHTML=accounts.map((a,i)=>`
- <div class="row">
-   <div class="icon">${a[0]}</div>
-   <div class="grow">
-     <div class="title">${a[1]}</div>
-     <input class="input" value="${a[2]}" inputmode="numeric" onchange="updateAccount(${i},this.value)" placeholder="Введите номер">
-     <div class="account-actions">
-       <button onclick="editAccount(${i})">Изменить</button>
-       <button class="danger" onclick="deleteAccount(${i})">Удалить</button>
-     </div>
-   </div>
- </div>`).join('');
-}
-
-function openAccount(){
- document.getElementById('accountProvider').value='Водоканал';
- document.getElementById('accountNumber').value='';
- document.getElementById('accountModal').classList.add('show');
- document.getElementById('accountNumber').focus();
-}
+function suggestStreets(){const q=normalize(document.getElementById('streetInput').value);const box=document.getElementById('streetSuggestions');if(!q){box.innerHTML='';return}const arr=dbStreets().filter(s=>normalize(s).includes(q)).slice(0,8);box.innerHTML=arr.map(s=>`<div class="suggestion" onclick="chooseStreet('${s.replaceAll("'","\\'")}')">ул. ${s}<small>${findStreet(s).houses.length} домов в стартовой базе</small></div>`).join('')||'<div class="suggestion">Улица пока не найдена в локальной стартовой базе</div>'}
+function chooseStreet(s){document.getElementById('streetInput').value=s;document.getElementById('streetSuggestions').innerHTML='';fillHouses(findStreet(s));}
+function fillHouses(st){selectedHouse=st;const sel=document.getElementById('houseSelect');sel.innerHTML='<option value="">Выберите дом</option>'+st.houses.map(h=>`<option>${h}</option>`).join('');document.getElementById('houseHint').textContent='Найдена организация: '+st.org;renderOrgPreview()}
+function selectHouse(){renderOrgPreview()}
+function renderOrgPreview(){const h=document.getElementById('houseSelect').value;const box=document.getElementById('orgPreview');if(selectedHouse&&h){box.innerHTML=`<div class="success">✓ Для дома <b>ул. ${selectedHouse.street}, ${h}</b> найдена управляющая организация: <b>${selectedHouse.org}</b>.</div>`}else box.innerHTML=''}
+function saveAddress(){const st=document.getElementById('streetInput').value.trim();const house=document.getElementById('houseSelect').value;const apartment=document.getElementById('apartmentInput').value.trim();if(!st||!house||!apartment){alert('Выберите улицу, дом и укажите квартиру.');return}const db=findStreet(st);if(!db){alert('Этой улицы пока нет в локальной базе прототипа.');return}savedAddress={street:'ул. '+db.street,house,apartment,org:db.org};localStorage.setItem('mydomAddress',JSON.stringify(savedAddress));renderAll();closeAddress()}
+function renderAll(){if(savedAddress){document.getElementById('addressTitle').textContent=savedAddress.street+', '+savedAddress.house;document.getElementById('apartmentTitle').textContent='Квартира '+savedAddress.apartment+' · Нальчик';document.getElementById('homeAddressTitle').textContent=savedAddress.street+', '+savedAddress.house;document.getElementById('homeApartmentTitle').textContent='Нальчик · квартира '+savedAddress.apartment;document.getElementById('homeStatus').innerHTML=`<div class="title">🏢 Управляющая организация</div><div style="margin-top:7px"><b>${savedAddress.org||'Не определена'}</b></div><div class="muted" style="margin-top:4px">Данные привязаны к выбранному дому. Подробные контакты подключим после проверки источников.</div>`;document.getElementById('orgCard').innerHTML=`<div class="title">Управляющая организация</div><div class="row"><div class="icon">🏢</div><div class="grow"><b>${savedAddress.org||'Не определена'}</b><div class="muted">Организация, найденная по базе дома</div></div><span class="badge badge-ok">Найдено</span></div><div class="source">Источник: стартовая база прототипа; для полной версии — ГИС ЖКХ.</div>`;document.getElementById('providersCard').innerHTML='<div class="title">Поставщики услуг</div><div class="row"><div class="icon">💧</div><div class="grow"><b>Водоснабжение</b><div class="muted">Лицевой счёт добавляется пользователем</div></div></div><div class="row"><div class="icon">🔥</div><div class="grow"><b>Теплоснабжение</b><div class="muted">Лицевой счёт добавляется пользователем</div></div></div><div class="row"><div class="icon">🔵</div><div class="grow"><b>Газ</b><div class="muted">Лицевой счёт добавляется пользователем</div></div></div><div class="row"><div class="icon">♻️</div><div class="grow"><b>Капремонт</b><div class="muted">Лицевой счёт добавляется пользователем</div></div></div>'}else{document.getElementById('addressTitle').textContent='Адрес не выбран';document.getElementById('apartmentTitle').textContent='Выберите дом и квартиру';document.getElementById('homeAddressTitle').textContent='Адрес не выбран';document.getElementById('homeApartmentTitle').textContent='—';document.getElementById('homeStatus').innerHTML='<div class="title">Начнём с ваших данных</div><p class="muted">Выберите адрес. Затем приложение покажет найденную управляющую организацию и позволит добавить ваши лицевые счета.</p><button class="btn block" onclick="openAddress()">Выбрать мой дом</button>';document.getElementById('orgCard').innerHTML='<div class="title">Управляющая организация</div><p class="muted">Сначала выберите дом.</p>'}renderAccounts();renderBills()}
+function renderAccounts(){const list=document.getElementById('accountsList');if(!accounts.length){list.innerHTML='<div class="empty">Пока нет лицевых счетов.<br>Добавьте свой номер или распознайте его с квитанции.</div>';return}list.innerHTML=accounts.map((a,i)=>`<div class="row"><div class="icon">${a.icon||icons[a.provider]||'🏠'}</div><div class="grow"><div class="title">${a.provider}</div><input class="input" value="${escapeHtml(a.number)}" inputmode="numeric" onchange="updateAccount(${i},this.value)"><div class="account-actions"><button onclick="editAccount(${i})">Изменить</button><button class="danger" onclick="deleteAccount(${i})">Удалить</button></div></div></div>`).join('')}
+function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')}
+function openAccount(){document.getElementById('accountProvider').value='Водоканал';document.getElementById('accountNumber').value='';document.getElementById('accountModal').classList.add('show')}
 function closeAccount(){document.getElementById('accountModal').classList.remove('show')}
-function saveAccount(){
- const provider=document.getElementById('accountProvider').value;
- const number=document.getElementById('accountNumber').value.trim();
- if(!number){alert('Введите номер лицевого счёта.');return}
- accounts.push([icons[provider]||'🏠',provider,number]);
- saveLocal(); renderAccounts(); closeAccount(); go('accounts');
-}
-function updateAccount(i,value){accounts[i][2]=value.trim();saveLocal()}
-function editAccount(i){
- const value=prompt('Измените номер лицевого счёта:',accounts[i][2]);
- if(value!==null && value.trim()){accounts[i][2]=value.trim();saveLocal();renderAccounts()}
-}
-function deleteAccount(i){
- if(confirm('Удалить этот лицевой счёт?')){
-   accounts.splice(i,1);saveLocal();renderAccounts();
- }
-}
-renderAddress();
-renderAccounts();
-function submitMeter(){document.getElementById('meterStatus').innerHTML='<div class="success">✓ Показание сохранено в прототипе. Прямая передача в Водоканал появится после интеграции.</div>'}
-function newIssue(){document.getElementById('chat').innerHTML='<div class="msg ai">Опишите проблему своими словами. Например: «Третий день нет горячей воды».</div>';openAI()}
+function saveAccount(){const provider=document.getElementById('accountProvider').value,number=document.getElementById('accountNumber').value.trim();if(!number){alert('Введите номер лицевого счёта.');return}accounts.push({provider,number,icon:icons[provider]||'🏠'});localStorage.setItem('mydomAccounts',JSON.stringify(accounts));renderAccounts();closeAccount();go('accounts')}
+function updateAccount(i,v){accounts[i].number=v.trim();localStorage.setItem('mydomAccounts',JSON.stringify(accounts))}
+function editAccount(i){const v=prompt('Введите новый номер лицевого счёта:',accounts[i].number);if(v&&v.trim()){accounts[i].number=v.trim();localStorage.setItem('mydomAccounts',JSON.stringify(accounts));renderAccounts()}}
+function deleteAccount(i){if(confirm('Удалить лицевой счёт?')){accounts.splice(i,1);localStorage.setItem('mydomAccounts',JSON.stringify(accounts));renderAccounts()}}
+function renderBills(){const b=document.getElementById('billList');b.innerHTML='<div class="card empty">Нет тестовых начислений. Здесь будут появляться суммы только из ваших квитанций или подключённых поставщиков.</div>'}
+function saveMeter(){const v=document.getElementById('water').value.trim();if(!v){alert('Введите показание.');return}localStorage.setItem('mydomWater',v);document.getElementById('meterStatus').innerHTML='<div class="success">✓ Показание сохранено локально: '+escapeHtml(v)+' м³. Передача поставщику пока не подключена.</div>'}
+function newIssue(){openAI();document.getElementById('chat').innerHTML='<div class="msg ai">Опишите проблему. В рабочей версии обращение будет автоматически направляться организации, которая отвечает за ваш дом.</div>'}
 function openAI(){document.getElementById('modal').classList.add('show');document.getElementById('q').focus()}function closeAI(){document.getElementById('modal').classList.remove('show')}
-function askAI(){let q=document.getElementById('q'),v=q.value.trim();if(!v)return;let c=document.getElementById('chat');c.innerHTML+=`<div class="msg user">${v.replaceAll('<','&lt;')}</div>`;let a=v.toLowerCase().includes('вода')?'Для вашего дома сначала стоит проверить, относится ли проблема к Водоканалу или к внутридомовой системе. Я могу подготовить текст обращения и показать контакт ответственной организации.':v.toLowerCase().includes('сумм')?'По данным прототипа основная сумма — отопление (2 864 ₽). В рабочей версии я сравню начисление с предыдущими месяцами по загруженным квитанциям.':'Я могу определить тип проблемы, ответственную организацию и подготовить обращение. В рабочей версии ответ будет основан на данных вашего дома.';c.innerHTML+=`<div class="msg ai">${a}</div>`;q.value='';c.scrollTop=c.scrollHeight}
-</script></body></html>
+function askAI(){let q=document.getElementById('q'),v=q.value.trim();if(!v)return;let c=document.getElementById('chat');c.innerHTML+=`<div class="msg user">${escapeHtml(v)}</div>`;let a=v.toLowerCase().includes('сумм')?'Загрузите квитанцию в разделе «Квитанция». Я смогу работать с распознанными данными после проверки пользователем.':'В этой версии я могу подсказать следующий шаг. После подключения базы дома и квитанций ответы будут привязаны к вашим данным.';c.innerHTML+=`<div class="msg ai">${a}</div>`;q.value='';c.scrollTop=c.scrollHeight}
+function loadReceipt(e){const f=e.target.files[0];if(!f)return;receiptImage=f;const img=document.getElementById('receiptPreview');img.src=URL.createObjectURL(f);img.style.display='block';document.getElementById('ocrBtn').style.display='block';document.getElementById('ocrStatus').innerHTML='';document.getElementById('receiptResult').style.display='none'}
+async function recognizeReceipt(){if(!receiptImage)return;const status=document.getElementById('ocrStatus');status.innerHTML='<div class="loading">⏳ Загружаю модуль распознавания…</div>';if(!window.Tesseract){status.innerHTML='<div class="notice">Не удалось загрузить OCR-модуль. Проверьте интернет и попробуйте ещё раз.</div>';return}try{const {data}=await Tesseract.recognize(receiptImage,'rus+eng',{logger:m=>{if(m.status==='recognizing text')status.innerHTML='<div class="loading">⏳ Распознавание: '+Math.round((m.progress||0)*100)+'%</div>'}});showReceiptResult(data.text)}catch(e){status.innerHTML='<div class="notice">Ошибка распознавания. Попробуйте более чёткое фото квитанции.</div>'}}
+function extract(text){const flat=text.replace(/\n+/g,' ').replace(/\s+/g,' ');const account=(flat.match(/(?:лицев[а-я]*\s*(?:сч[её]т|№)?|л\/с|лс)\s*[:№]?\s*([0-9][0-9\- ]{5,})/i)||[])[1]||'';const period=(flat.match(/(?:за|период)\s*(\d{1,2}[.\/]\d{4}|[а-яё]+\s*\d{4})/i)||[])[1]||'';const total=(flat.match(/(?:итого\s*к\s*оплате|всего\s*к\s*оплате|к\s*оплате)\D{0,20}([0-9\s]+[,.][0-9]{2})/i)||[])[1]||'';const debt=(flat.match(/(?:долг|задолженность)\D{0,20}([0-9\s]+[,.][0-9]{2})/i)||[])[1]||'';return{account:account.trim(),period:period.trim(),total:total.trim(),debt:debt.trim()}}
+function showReceiptResult(text){document.getElementById('ocrStatus').innerHTML='<div class="success">✓ Распознавание завершено. Проверьте найденные данные.</div>';const x=extract(text);document.getElementById('receiptResult').style.display='block';document.getElementById('receiptResult').innerHTML=`<div class="card" style="padding:12px;background:#f8fbff"><div class="title">Найденные поля</div><div class="field"><b>Лицевой счёт</b><input id="rAccount" class="input" value="${escapeHtml(x.account)}" placeholder="Не найден — введите вручную"></div><div class="field"><b>Период</b><input id="rPeriod" class="input" value="${escapeHtml(x.period)}"></div><div class="field"><b>Итого к оплате</b><input id="rTotal" class="input" value="${escapeHtml(x.total)}"></div><div class="field"><b>Задолженность</b><input id="rDebt" class="input" value="${escapeHtml(x.debt)}"></div><button class="btn block" onclick="saveReceiptData()">Сохранить проверенные данные</button></div><div class="title" style="margin:12px 0 6px">Текст распознавания</div><div class="ocr">${escapeHtml(text)}</div>`}
+function saveReceiptData(){const n=document.getElementById('rAccount').value.trim();if(n){const existing=accounts.find(a=>a.number===n);if(!existing){accounts.push({provider:'Квитанция (организация будет уточнена)',number:n,icon:'📄'});localStorage.setItem('mydomAccounts',JSON.stringify(accounts));renderAccounts()}}localStorage.setItem('mydomLastReceipt',JSON.stringify({account:n,period:document.getElementById('rPeriod').value,total:document.getElementById('rTotal').value,debt:document.getElementById('rDebt').value,savedAt:new Date().toISOString()}));alert('Проверенные данные квитанции сохранены в браузере.');go('accounts')}
+renderAll();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</body></html>
