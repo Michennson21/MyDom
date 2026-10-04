@@ -18,16 +18,18 @@
 </section>
 <section id="bills" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мои начисления</div><p class="muted">Добавляйте суммы вручную. Источник всегда виден — приложение не выдаёт введённые вами данные за сведения поставщика.</p><button class="btn block" onclick="openBill()">＋ Добавить начисление</button></div><div id="billList"></div></section>
 <section id="meters" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Показания счётчиков</div><p class="muted">Показания сохраняются в приложении. До официальной интеграции они не считаются переданными поставщику.</p><label class="formlabel">Вода, м³</label><input id="water" class="input" placeholder="Введите показание"><button class="btn block" onclick="saveMeter()">Сохранить показание</button><div id="meterStatus" style="margin-top:10px"></div></div></section>
-<section id="issues" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мои обращения</div><p class="muted">В демо пока нет готовых обращений. Позже они будут привязываться к вашей УК/поставщику.</p><button class="btn block" onclick="newIssue()">＋ Создать обращение</button></div></section>
+<section id="issues" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Решить проблему</div><p class="muted">Сначала приложение проверит, можно ли решить вопрос без обращения к сотруднику. Если нет — подготовит структурированное обращение.</p><button class="btn block" onclick="newIssue()">＋ Решить проблему</button></div><div id="issueList"></div></section>
 <section id="homeinfo" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мой дом</div><h2 id="homeAddressTitle" style="margin-bottom:4px">Адрес не выбран</h2><div id="homeApartmentTitle" class="muted">—</div></div><div class="card" id="orgCard"></div><div class="card"><div class="title">Лицевые счета</div><p class="muted">Только ваши номера. Тестовых счетов больше нет.</p><button class="btn secondary block" onclick="go('accounts')">Открыть лицевые счета</button></div><div class="card" id="providersCard"><div class="title">Поставщики услуг</div><p class="muted">Сведения появятся после определения организаций для выбранного дома.</p></div></section>
 <section id="accounts" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мои лицевые счета</div><p class="muted">Добавьте номер один раз. Затем начисления будут привязываться к этому счёту и формировать историю.</p><div id="accountsList"></div><button class="btn block" onclick="openAccount()">＋ Добавить лицевой счёт</button></div></section>
 <section id="receipts" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Архив документов</div><p class="muted">OCR временно отключён. Начисления вводятся вручную — так MVP остаётся надёжным и понятным.</p><button class="btn block" onclick="openBill()">＋ Добавить начисление вручную</button></div><div class="card"><div class="title">Почему вручную?</div><p class="muted">Сейчас важнее собрать все услуги, лицевые счета и историю в одном месте. Позже ручной источник можно заменить официальной интеграцией с поставщиком.</p></div></section>
 </div>
-<div class="nav"><button class="active" data-go="home" onclick="go('home')"><span class="ni">⌂</span>Главная</button><button data-go="bills" onclick="go('bills')"><span class="ni">▤</span>Начисления</button><button data-go="meters" onclick="go('meters')"><span class="ni">♒</span>Показания</button><button data-go="issues" onclick="go('issues')"><span class="ni">✓</span>Обращения</button><button data-go="homeinfo" onclick="go('homeinfo')"><span class="ni">•••</span>Ещё</button></div></div>
+<div class="nav"><button class="active" data-go="home" onclick="go('home')"><span class="ni">⌂</span>Главная</button><button data-go="bills" onclick="go('bills')"><span class="ni">▤</span>Начисления</button><button data-go="meters" onclick="go('meters')"><span class="ni">♒</span>Показания</button><button data-go="issues" onclick="go('issues')"><span class="ni">✓</span>Решить</button><button data-go="homeinfo" onclick="go('homeinfo')"><span class="ni">•••</span>Ещё</button></div></div>
 
 <div id="addressModal" class="modal center"><div class="sheet"><h3>📍 Выберите адрес</h3><div class="notice">Введите название улицы и выберите её из подсказок. Адресная база Нальчика сформирована по ГАР. Сведения об УК привязаны к конкретному дому и имеют дату/источник проверки.</div><label class="formlabel">Улица</label><input id="streetInput" class="input" placeholder="Например, Мальбахова" autocomplete="off" oninput="suggestStreets()"><div id="streetSuggestions"></div><label class="formlabel">Дом</label><select id="houseSelect" class="input" onchange="selectHouse()"><option value="">Сначала выберите улицу</option></select><div id="houseHint" class="muted" style="margin-top:6px"></div><label class="formlabel">Квартира</label><input id="apartmentInput" class="input" inputmode="numeric" placeholder="Например: 47"><div id="orgPreview" style="margin-top:12px"></div><div class="actions"><button class="btn secondary" onclick="closeAddress()">Отмена</button><button class="btn" onclick="saveAddress()">Сохранить</button></div></div></div>
 <div id="accountModal" class="modal center"><div class="sheet"><h3>➕ Лицевой счёт</h3><label class="formlabel">Организация</label><select id="accountProvider" class="input"><option>Водоканал</option><option>Нальчикская теплоснабжающая компания</option><option>Газпром межрегионгаз</option><option>Капремонт</option><option>Экотехпром</option><option>Управляющая компания</option><option>Другое</option></select><label class="formlabel">Номер лицевого счёта</label><input id="accountNumber" class="input" inputmode="numeric" placeholder="Введите ваш номер"><div class="actions"><button class="btn secondary" onclick="closeAccount()">Отмена</button><button class="btn" onclick="saveAccount()">Сохранить</button></div></div></div>
 <div id="billModal" class="modal center"><div class="sheet"><h3>＋ Добавить начисление</h3><label class="formlabel">Услуга / поставщик</label><select id="billProvider" class="input" onchange="syncBillAccounts()"><option>Водоканал</option><option>Нальчикская теплоснабжающая компания</option><option>Газпром межрегионгаз</option><option>Капремонт</option><option>Экотехпром</option><option>Управляющая компания</option><option>Электроэнергия</option><option>Другое</option></select><label class="formlabel">Лицевой счёт</label><select id="billAccount" class="input"></select><label class="formlabel">Период *</label><input id="billPeriod" class="input" placeholder="Например: сентябрь 2026"><label class="formlabel">К оплате, ₽ *</label><input id="billTotal" class="input" inputmode="decimal" placeholder="0,00"><div class="grid"><div><label class="formlabel">Начислено, ₽</label><input id="billAccrued" class="input" inputmode="decimal" placeholder="необязательно"></div><div><label class="formlabel">Долг, ₽</label><input id="billDebt" class="input" inputmode="decimal" placeholder="необязательно"></div></div><div class="grid"><div><label class="formlabel">Оплачено, ₽</label><input id="billPaid" class="input" inputmode="decimal" placeholder="необязательно"></div><div><label class="formlabel">Дата оплаты</label><input id="billPaidDate" class="input" type="date"></div></div><div class="notice" style="margin-top:12px">Источник: введено пользователем. Эти данные не подтверждены поставщиком.</div><div class="actions"><button class="btn secondary" onclick="closeBill()">Отмена</button><button class="btn" onclick="saveBill()">Сохранить</button></div></div></div>
+
+<div id="issueModal" class="modal center"><div class="sheet"><h3>Решить проблему</h3><div id="issueStep"></div><div class="actions"><button class="btn secondary" onclick="closeIssueFlow()">Закрыть</button></div></div></div>
 <div id="modal" class="modal"><div class="sheet"><h3>🤖 AI-помощник</h3><div id="chat" class="chat"><div class="msg ai">Здравствуйте! Я помогу разобраться с данными вашего дома и квитанциями. В этой версии ответы демонстрационные.</div></div><div style="display:flex;gap:8px;margin-top:10px"><input id="q" class="input" placeholder="Например: что означает пеня?"><button class="btn" onclick="askAI()">→</button></div><button class="back" style="margin-top:12px" onclick="closeAI()">Закрыть</button></div></div>
 
 <script>
@@ -252,7 +254,7 @@ function renderReceiptHistory(){const box=document.getElementById('receiptHistor
 
 function renderBills(){document.getElementById('billList').innerHTML='<div class="card empty">Нет тестовых начислений. Здесь будут появляться суммы только из ваших квитанций или после подключения поставщиков.</div>'}
 function saveMeter(){const v=document.getElementById('water').value.trim();if(!v){alert('Введите показание.');return}localStorage.setItem('mydomWater',v);document.getElementById('meterStatus').innerHTML='<div class="success">✓ Показание сохранено локально: '+escapeHtml(v)+' м³. Передача поставщику пока не подключена.</div>'}
-function newIssue(){openAI();document.getElementById('chat').innerHTML='<div class="msg ai">Опишите проблему. В рабочей версии обращение будет направляться организации, которая отвечает за ваш дом.</div>'}
+function newIssue(){openIssueFlow()}
 function openAI(){document.getElementById('modal').classList.add('show');document.getElementById('q').focus()}
 function closeAI(){document.getElementById('modal').classList.remove('show')}
 function askAI(){let q=document.getElementById('q'),v=q.value.trim();if(!v)return;let c=document.getElementById('chat');c.innerHTML+=`<div class="msg user">${escapeHtml(v)}</div>`;let a=v.toLowerCase().includes('сумм')?'Откройте «Начисления» и добавьте сумму вручную. Источник будет отмечен как «введено пользователем».':'В этой версии я могу подсказать следующий шаг. Официальная отправка поставщику появится после интеграции.';c.innerHTML+=`<div class="msg ai">${a}</div>`;q.value='';c.scrollTop=c.scrollHeight}
@@ -569,6 +571,59 @@ async function sendLocalEventNotification(e){
   const body=(e.description||e.service||'Событие по вашему дому')+(e.end?' · '+(e.type==='restored'?'Восстановлено: ':'Ожидается до: ')+fmtDT(e.end):'');
   await showSystemNotification(icon+' '+e.title,{body,tag:'house-event-'+e.id,data:{url:'./'}});
 }
+
+// v0.24 — первый прототип цифрового абонентского отдела
+let residentIssues=JSON.parse(localStorage.getItem('mydomResidentIssues')||'[]');
+const issueKinds={
+ 'Водоканал':['Нет воды','Слабое давление','Неверное начисление','Не учтён платёж','Нужен перерасчёт','Проблема со счётчиком','Другое'],
+ 'Нальчикская теплоснабжающая компания':['Нет горячей воды','Нет отопления','Неверное начисление','Не учтён платёж','Нужен перерасчёт','Другое'],
+ 'Управляющая компания':['Проблема в подъезде','Содержание дома','Неверное начисление','Аварийная ситуация','Другое'],
+ 'Электроэнергия':['Нет электричества','Неверное начисление','Не учтён платёж','Проблема со счётчиком','Другое'],
+ 'Газпром межрегионгаз':['Неверное начисление','Не учтён платёж','Проблема со счётчиком','Другое'],
+ 'Другое':['Другое']
+};
+function openIssueFlow(){document.getElementById('issueModal').classList.add('show');renderIssueProviderStep();}
+function closeIssueFlow(){document.getElementById('issueModal').classList.remove('show');}
+function renderIssueProviderStep(){
+ const providers=[...new Set(['Водоканал',...accounts.map(a=>a.provider),'Управляющая компания','Электроэнергия'])];
+ document.getElementById('issueStep').innerHTML='<p class="muted">Шаг 1 из 2 · Выберите услугу или организацию.</p>'+providers.map(p=>`<button class="mini" style="width:100%;text-align:left;margin:5px 0" onclick="renderIssueKindStep('${escapeHtml(p).replace(/'/g,"\\'")}')"><b>${escapeHtml(p)}</b></button>`).join('');
+}
+function renderIssueKindStep(provider){
+ const kinds=issueKinds[provider]||['Неверное начисление','Не учтён платёж','Другое'];
+ document.getElementById('issueStep').innerHTML=`<button class="back" onclick="renderIssueProviderStep()">← Выбрать другую услугу</button><div class="title">${escapeHtml(provider)}</div><p class="muted">Что произошло?</p>`+kinds.map(k=>`<button class="mini" style="width:100%;text-align:left;margin:5px 0" onclick="handleIssueKind('${escapeHtml(provider).replace(/'/g,"\\'")}','${escapeHtml(k).replace(/'/g,"\\'")}')"><b>${escapeHtml(k)}</b></button>`).join('');
+}
+function waterIncidentForAddress(){
+ return houseEvents.filter(eventMatches).find(e=>e.type!=='restored' && /вод/i.test((e.service||'')+' '+(e.title||'')+' '+(e.description||'')));
+}
+function handleIssueKind(provider,kind){
+ if(provider==='Водоканал' && kind==='Нет воды'){
+   const e=waterIncidentForAddress();
+   if(e){
+     document.getElementById('issueStep').innerHTML=`<div class="redbox"><b>🔴 По вашему адресу уже известно об отключении</b><div style="margin-top:7px">${escapeHtml(e.title)}</div></div><div class="card" style="box-shadow:none;border:1px solid #e7edf5;margin-top:12px"><div class="event-desc">${escapeHtml(e.description||'Информация о работах уточняется.')}</div><div class="event-meta"><b>Начало:</b> ${fmtDT(e.start)}${e.end?`<br><b>Ожидаемое восстановление:</b> ${fmtDT(e.end)}`:''}</div><div class="event-source">Источник: ${escapeHtml(e.source||'не указан')}</div></div><div class="success">Создавать повторное обращение сейчас не требуется. Следите за обновлением события в приложении.</div><button class="btn secondary block" onclick="go('home');closeIssueFlow()">Посмотреть событие на главной</button>`;
+     return;
+   }
+ }
+ renderIssueForm(provider,kind);
+}
+function renderIssueForm(provider,kind){
+ const acc=accounts.find(a=>a.provider===provider);
+ document.getElementById('issueStep').innerHTML=`<button class="back" onclick="renderIssueKindStep('${escapeHtml(provider).replace(/'/g,"\\'")}')">← Назад</button><div class="title">${escapeHtml(kind)}</div><div class="field"><b>Организация</b>${escapeHtml(provider)}</div><div class="field"><b>Адрес</b>${savedAddress?escapeHtml(savedAddress.street+' '+savedAddress.house+', кв. '+savedAddress.apartment):'Адрес не выбран'}</div><div class="field"><b>Лицевой счёт</b>${acc?escapeHtml(acc.number):'<span class="muted">не добавлен</span>'}</div><label class="formlabel">Опишите ситуацию *</label><textarea id="issueText" class="input" rows="4" style="resize:vertical" placeholder="Например: воды нет с 10:30, в квартире краны открыты..."></textarea><label class="formlabel">Контакт для связи (необязательно)</label><input id="issueContact" class="input" placeholder="Телефон или другой контакт"><div class="notice" style="margin-top:12px">В этой версии обращение сохраняется только в приложении и <b>не отправляется поставщику</b>.</div><button class="btn block" onclick="saveResidentIssue('${escapeHtml(provider).replace(/'/g,"\\'")}','${escapeHtml(kind).replace(/'/g,"\\'")}')">Подготовить обращение</button>`;
+}
+function saveResidentIssue(provider,kind){
+ const t=(document.getElementById('issueText')?.value||'').trim(); if(!t){alert('Опишите ситуацию.');return;}
+ const acc=accounts.find(a=>a.provider===provider);
+ const x={id:Date.now(),provider,kind,text:t,contact:(document.getElementById('issueContact')?.value||'').trim(),account:acc?.number||'',address:savedAddress?`${savedAddress.street} ${savedAddress.house}, кв. ${savedAddress.apartment}`:'',status:'Подготовлено · не отправлено поставщику',createdAt:new Date().toISOString()};
+ residentIssues.unshift(x);localStorage.setItem('mydomResidentIssues',JSON.stringify(residentIssues));renderIssueList();
+ document.getElementById('issueStep').innerHTML=`<div class="success"><b>✓ Обращение подготовлено</b><div style="margin-top:5px">Все основные данные собраны в структурированном виде.</div></div><div class="card" style="box-shadow:none;border:1px solid #e7edf5;margin-top:12px"><b>${escapeHtml(kind)}</b><div class="muted" style="margin-top:4px">${escapeHtml(provider)} · ${escapeHtml(x.address||'адрес не указан')}</div><p style="font-size:13px">${escapeHtml(t)}</p><div class="badge badge-warn">Не отправлено поставщику</div></div><button class="btn block" onclick="closeIssueFlow()">Готово</button>`;
+}
+function deleteResidentIssue(id){if(!confirm('Удалить подготовленное обращение?'))return;residentIssues=residentIssues.filter(x=>x.id!==id);localStorage.setItem('mydomResidentIssues',JSON.stringify(residentIssues));renderIssueList();}
+function renderIssueList(){
+ const b=document.getElementById('issueList');if(!b)return;
+ b.innerHTML=residentIssues.length?residentIssues.map(x=>`<div class="card"><div class="title">${escapeHtml(x.kind)}</div><div class="muted">${escapeHtml(x.provider)} · ${fmtDT(x.createdAt)}</div><p style="font-size:13px">${escapeHtml(x.text)}</p><span class="badge badge-warn">${escapeHtml(x.status)}</span><div class="account-actions"><button class="danger" onclick="deleteResidentIssue(${x.id})">Удалить</button></div></div>`).join(''):'<div class="card empty">Подготовленных обращений пока нет.</div>';
+}
+const _goV024=go;go=function(id){_goV024(id);if(id==='issues')renderIssueList();};
+window.addEventListener('load',renderIssueList);
+
 window.addEventListener('load',()=>setTimeout(initPWA,100));
 window.matchMedia('(display-mode: standalone)').addEventListener?.('change',()=>updateNotificationPanel());
 </script>
