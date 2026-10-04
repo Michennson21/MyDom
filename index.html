@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b82f6"><link rel="manifest" href="manifest.json">
+<title>Мой дом — Нальчик</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f7fb;color:#10243e}button,input{font:inherit}button{cursor:pointer;border:0}.app{max-width:520px;margin:auto;min-height:100vh;background:#f7f9fc}.top{padding:22px 18px 12px;background:white;position:sticky;top:0;z-index:3;border-bottom:1px solid #e7edf5}.brand{font-size:23px;font-weight:800}.sub{font-size:13px;color:#6d7d91;margin-top:4px}.content{padding:16px 16px 92px}.card{background:white;border-radius:18px;padding:16px;margin-bottom:13px;box-shadow:0 3px 16px #163a5a0d}.address{background:linear-gradient(135deg,#087ff1,#42a5ff);color:white}.address .small{opacity:.8;font-size:12px}.address h2{margin:5px 0 2px;font-size:20px}.address p{margin:0;opacity:.9}.amount{font-size:32px;font-weight:800;margin:8px 0}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #edf1f6}.row:last-child{border-bottom:0}.icon{width:38px;height:38px;border-radius:12px;background:#eaf4ff;display:grid;place-items:center;font-size:19px;flex:none}.grow{flex:1}.muted{color:#77869a;font-size:12px}.title{font-weight:700}.btn{background:#087ff1;color:#fff;border-radius:12px;padding:11px 15px;font-weight:700}.btn.secondary{background:#edf5ff;color:#0874d8}.btn.block{width:100%;margin-top:10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini{padding:14px;border-radius:14px;background:#f5f8fc}.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);background:white;border-top:1px solid #e4eaf2;display:grid;grid-template-columns:repeat(5,1fr);padding:7px 6px calc(7px + env(safe-area-inset-bottom));z-index:5}.nav button{background:none;color:#7b8a9d;font-size:10px}.nav button.active{color:#087ff1;font-weight:700}.nav .ni{font-size:20px;display:block}.section{display:none}.section.active{display:block}.input{width:100%;padding:12px;border:1px solid #dce5ef;border-radius:12px;outline:none}.notice{background:#fff8df;border:1px solid #ffe49a;color:#7a5a00;padding:12px;border-radius:13px;font-size:13px}.success{background:#eaf9f0;color:#197345;padding:10px;border-radius:10px;font-size:13px}.tag{font-size:11px;background:#edf5ff;color:#0874d8;padding:5px 8px;border-radius:20px}.back{background:none;color:#087ff1;padding:0;margin-bottom:12px;font-weight:700}.modal{display:none;position:fixed;inset:0;background:#0006;z-index:10;align-items:flex-end}.modal.show{display:flex}.sheet{background:white;width:100%;max-width:520px;margin:auto;border-radius:22px 22px 0 0;padding:20px}.sheet h3{margin-top:0}.chat{height:270px;overflow:auto;background:#f5f8fc;border-radius:14px;padding:12px}.msg{max-width:85%;padding:10px 12px;border-radius:14px;margin:7px 0;font-size:13px}.user{background:#087ff1;color:white;margin-left:auto}.ai{background:white}.pill{display:inline-block;margin:3px 4px 3px 0}.footnote{font-size:11px;color:#8a98a9;line-height:1.4}
+.modal.center{align-items:center;padding:16px}.modal.center .sheet{border-radius:22px;max-height:90vh;overflow:auto}
+.formlabel{display:block;font-size:12px;font-weight:700;color:#66788c;margin:10px 0 5px}
+.actions{display:flex;gap:8px;margin-top:12px}.actions .btn{flex:1}
+.account-actions{display:flex;gap:6px;margin-top:8px}.account-actions button{padding:7px 9px;border-radius:9px;background:#edf5ff;color:#0874d8;font-size:12px}
+.danger{background:#fff0f0!important;color:#c53b3b!important}
+
+</style></head>
+<body><div class="app">
+<div class="top"><div class="brand">🏠 Мой дом — Нальчик</div><div class="sub">Все услуги ЖКХ — в одном месте</div></div>
+<div class="content">
+<section id="home" class="section active">
+<div class="card address">
+<div class="small">Ваш адрес</div>
+<h2 id="addressTitle">ул. Фурманова, 12-в</h2>
+<p id="apartmentTitle">Квартира 47 · Нальчик</p>
+<button class="btn" style="margin-top:12px;background:#ffffff;color:#0874d8" onclick="openAddress()">Изменить адрес</button>
+</div>
+<div class="card"><div class="muted">Общая задолженность</div><div class="amount">2 864 ₽</div><div class="muted">К оплате в этом месяце: <b>7 842 ₽</b></div><button class="btn block" onclick="go('bills')">Оплатить всё</button></div>
+<div class="card"><div class="title">Быстрые действия</div><div class="grid" style="margin-top:10px"><button class="mini" onclick="go('meters')">💧<br><b>Показания</b></button><button class="mini" onclick="go('issues')">📝<br><b>Обращение</b></button><button class="mini" onclick="go('homeinfo')">🏢<br><b>Мой дом</b></button><button class="mini" onclick="openAI()">🤖<br><b>Спросить AI</b></button></div></div>
+<div class="card"><div class="title">Скоро передать показания</div><div class="notice" style="margin-top:10px">💧 Вода · до 3 числа следующего месяца<br><b>Осталось 3 дня</b></div></div>
+</section>
+<section id="bills" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="muted">Октябрь 2026</div><div class="amount">7 842 ₽</div><button class="btn block" onclick="alert('В v0.1 здесь будет переход к оплате. Платёжная интеграция подключается позже.')">Оплатить всё</button></div><div class="card" id="billList"></div></section>
+<section id="meters" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Показания счётчиков</div><div class="notice" style="margin-top:10px">Срок передачи: с 15-го числа текущего месяца по 3-е число следующего.</div><div class="row"><div class="icon">💧</div><div class="grow"><div class="title">Водоснабжение</div><div class="muted">Последнее: 124,3 м³</div></div><input id="water" class="input" style="max-width:120px" value="123,8"></div><button class="btn block" onclick="submitMeter()">Передать показания</button><div id="meterStatus" style="margin-top:10px"></div></div></section>
+<section id="issues" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мои обращения</div><button class="btn block" onclick="newIssue()">＋ Создать обращение</button></div><div class="card"><div class="row"><div class="grow"><div class="title">Нет горячей воды</div><div class="muted">14.10.2026 · УК «Перспектива»</div></div><span class="tag">В работе</span></div><div class="row"><div class="grow"><div class="title">Протечка в подъезде</div><div class="muted">10.10.2026 · УК «Перспектива»</div></div><span class="tag" style="background:#eaf9f0;color:#197345">Решено</span></div></div></section>
+<section id="homeinfo" class="section"><button class="back" onclick="go('home')">← Главная</button><div class="card"><div class="title">Мой дом</div><h2 id="homeAddressTitle" style="margin-bottom:4px">ул. Фурманова, 12-в</h2><div id="homeApartmentTitle" class="muted">Нальчик · квартира 47</div></div><div class="card"><div class="title">Управляющая организация</div><div class="row"><div class="icon">🏢</div><div class="grow"><b>ООО УК «Перспектива»</b><div class="muted">Контакты и аварийная служба</div></div><button class="btn secondary" onclick="alert('Телефон УК будет добавлен после проверки актуальных контактов.')">→</button></div></div><div class="card"><div class="title">Лицевые счета</div><p class="muted">Счета можно изменить и добавить свои.</p><button class="btn secondary block" onclick="go('accounts')">Открыть лицевые счета</button></div><div class="card"><div class="title">Поставщики услуг</div><div class="row"><div class="icon">💧</div><div class="grow"><b>Водоснабжение</b><div class="muted">Водоканал</div></div></div><div class="row"><div class="icon">🔥</div><div class="grow"><b>Теплоснабжение</b><div class="muted">Нальчикская теплоснабжающая компания</div></div></div><div class="row"><div class="icon">🔵</div><div class="grow"><b>Газ</b><div class="muted">Газпром межрегионгаз Нальчик</div></div></div><div class="row"><div class="icon">♻️</div><div class="grow"><b>Капремонт</b><div class="muted">Региональный оператор</div></div></div></div></section>
+<section id="accounts" class="section">
+<button class="back" onclick="go('home')">← Главная</button>
+<div class="card">
+<div class="title">Лицевые счета</div>
+<p class="muted">Добавляйте реальные номера счетов для тестирования. Данные сохраняются в браузере на этом устройстве.</p>
+<div id="accountsList"></div>
+<button class="btn block" onclick="openAccount()">＋ Добавить лицевой счёт</button>
+</div>
+<div class="card"><div class="footnote">Это демонстрационный прототип: номера счетов никуда не отправляются и не используются для реальных платежей.</div></div>
+</section>
+</div>
+<div class="nav"><button class="active" data-go="home" onclick="go('home')"><span class="ni">⌂</span>Главная</button><button data-go="bills" onclick="go('bills')"><span class="ni">▤</span>Начисления</button><button data-go="meters" onclick="go('meters')"><span class="ni">♒</span>Показания</button><button data-go="issues" onclick="go('issues')"><span class="ni">✓</span>Обращения</button><button data-go="homeinfo" onclick="go('homeinfo')"><span class="ni">•••</span>Ещё</button></div>
+</div>
+<div id="addressModal" class="modal center">
+<div class="sheet">
+<h3>📍 Изменить адрес</h3>
+<label class="formlabel">Улица и дом</label>
+<input id="addressInput" class="input" placeholder="Например: ул. Мальбахова, 121">
+<label class="formlabel">Квартира</label>
+<input id="apartmentInput" class="input" placeholder="Например: 47">
+<div class="actions"><button class="btn secondary" onclick="closeAddress()">Отмена</button><button class="btn" onclick="saveAddress()">Сохранить</button></div>
+</div></div>
+
+<div id="accountModal" class="modal center">
+<div class="sheet">
+<h3>➕ Лицевой счёт</h3>
+<label class="formlabel">Организация</label>
+<select id="accountProvider" class="input">
+<option>Водоканал</option><option>Нальчикская теплоснабжающая компания</option><option>Газпром межрегионгаз</option><option>Капремонт</option><option>Управляющая компания</option><option>Другое</option>
+</select>
+<label class="formlabel">Номер лицевого счёта</label>
+<input id="accountNumber" class="input" inputmode="numeric" placeholder="Например: 123456789">
+<div class="actions"><button class="btn secondary" onclick="closeAccount()">Отмена</button><button class="btn" onclick="saveAccount()">Добавить</button></div>
+</div></div>
+
+<div id="modal" class="modal"><div class="sheet"><h3>🤖 AI-помощник</h3><div id="chat" class="chat"><div class="msg ai">Здравствуйте! Я помогу разобраться с начислениями и проблемами ЖКХ по вашему дому.</div></div><div style="display:flex;gap:8px;margin-top:10px"><input id="q" class="input" placeholder="Например: почему выросла сумма?"><button class="btn" onclick="askAI()">→</button></div><button class="back" style="margin-top:12px" onclick="closeAI()">Закрыть</button></div></div>
+<script>
+const bills=[['💧','Водоснабжение','1 243 ₽'],['🔥','Отопление','2 864 ₽'],['🔵','Газоснабжение','735 ₽'],['🏠','Содержание и ремонт','2 410 ₽'],['♻️','Капитальный ремонт','590 ₽']];
+function go(id){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.go===id));scrollTo(0,0)}
+document.getElementById('billList').innerHTML=bills.map(x=>`<div class="row"><div class="icon">${x[0]}</div><div class="grow"><div class="title">${x[1]}</div><div class="muted">Лицевой счёт: будет добавлен</div></div><b>${x[2]}</b></div>`).join('');
+const defaultAccounts=[
+ ['💧','Водоканал','123456'],
+ ['🔥','Нальчикская теплоснабжающая компания','234567'],
+ ['🔵','Газпром межрегионгаз','345678']
+];
+
+let savedAddress=JSON.parse(localStorage.getItem('mydomAddress')||'null')||{
+ street:'ул. Фурманова, 12-в', apartment:'47'
+};
+let accounts=JSON.parse(localStorage.getItem('mydomAccounts')||'null')||defaultAccounts;
+
+const icons={
+ 'Водоканал':'💧',
+ 'Нальчикская теплоснабжающая компания':'🔥',
+ 'Газпром межрегионгаз':'🔵',
+ 'Капремонт':'♻️',
+ 'Управляющая компания':'🏢',
+ 'Другое':'🏠'
+};
+
+function saveLocal(){
+ localStorage.setItem('mydomAddress',JSON.stringify(savedAddress));
+ localStorage.setItem('mydomAccounts',JSON.stringify(accounts));
+}
+
+function renderAddress(){
+ document.getElementById('addressTitle').textContent=savedAddress.street;
+ document.getElementById('apartmentTitle').textContent='Квартира '+savedAddress.apartment+' · Нальчик';
+ document.getElementById('homeAddressTitle').textContent=savedAddress.street;
+ document.getElementById('homeApartmentTitle').textContent='Нальчик · квартира '+savedAddress.apartment;
+}
+
+function openAddress(){
+ document.getElementById('addressInput').value=savedAddress.street;
+ document.getElementById('apartmentInput').value=savedAddress.apartment;
+ document.getElementById('addressModal').classList.add('show');
+}
+function closeAddress(){document.getElementById('addressModal').classList.remove('show')}
+function saveAddress(){
+ const street=document.getElementById('addressInput').value.trim();
+ const apartment=document.getElementById('apartmentInput').value.trim();
+ if(!street||!apartment){alert('Заполните адрес и номер квартиры.');return}
+ savedAddress={street,apartment};
+ saveLocal(); renderAddress(); closeAddress();
+}
+
+function renderAccounts(){
+ const list=document.getElementById('accountsList');
+ if(!accounts.length){
+   list.innerHTML='<div class="notice" style="margin:12px 0">Пока нет добавленных лицевых счетов.</div>';
+   return;
+ }
+ list.innerHTML=accounts.map((a,i)=>`
+ <div class="row">
+   <div class="icon">${a[0]}</div>
+   <div class="grow">
+     <div class="title">${a[1]}</div>
+     <input class="input" value="${a[2]}" inputmode="numeric" onchange="updateAccount(${i},this.value)" placeholder="Введите номер">
+     <div class="account-actions">
+       <button onclick="editAccount(${i})">Изменить</button>
+       <button class="danger" onclick="deleteAccount(${i})">Удалить</button>
+     </div>
+   </div>
+ </div>`).join('');
+}
+
+function openAccount(){
+ document.getElementById('accountProvider').value='Водоканал';
+ document.getElementById('accountNumber').value='';
+ document.getElementById('accountModal').classList.add('show');
+ document.getElementById('accountNumber').focus();
+}
+function closeAccount(){document.getElementById('accountModal').classList.remove('show')}
+function saveAccount(){
+ const provider=document.getElementById('accountProvider').value;
+ const number=document.getElementById('accountNumber').value.trim();
+ if(!number){alert('Введите номер лицевого счёта.');return}
+ accounts.push([icons[provider]||'🏠',provider,number]);
+ saveLocal(); renderAccounts(); closeAccount(); go('accounts');
+}
+function updateAccount(i,value){accounts[i][2]=value.trim();saveLocal()}
+function editAccount(i){
+ const value=prompt('Измените номер лицевого счёта:',accounts[i][2]);
+ if(value!==null && value.trim()){accounts[i][2]=value.trim();saveLocal();renderAccounts()}
+}
+function deleteAccount(i){
+ if(confirm('Удалить этот лицевой счёт?')){
+   accounts.splice(i,1);saveLocal();renderAccounts();
+ }
+}
+renderAddress();
+renderAccounts();
+function submitMeter(){document.getElementById('meterStatus').innerHTML='<div class="success">✓ Показание сохранено в прототипе. Прямая передача в Водоканал появится после интеграции.</div>'}
+function newIssue(){document.getElementById('chat').innerHTML='<div class="msg ai">Опишите проблему своими словами. Например: «Третий день нет горячей воды».</div>';openAI()}
+function openAI(){document.getElementById('modal').classList.add('show');document.getElementById('q').focus()}function closeAI(){document.getElementById('modal').classList.remove('show')}
+function askAI(){let q=document.getElementById('q'),v=q.value.trim();if(!v)return;let c=document.getElementById('chat');c.innerHTML+=`<div class="msg user">${v.replaceAll('<','&lt;')}</div>`;let a=v.toLowerCase().includes('вода')?'Для вашего дома сначала стоит проверить, относится ли проблема к Водоканалу или к внутридомовой системе. Я могу подготовить текст обращения и показать контакт ответственной организации.':v.toLowerCase().includes('сумм')?'По данным прототипа основная сумма — отопление (2 864 ₽). В рабочей версии я сравню начисление с предыдущими месяцами по загруженным квитанциям.':'Я могу определить тип проблемы, ответственную организацию и подготовить обращение. В рабочей версии ответ будет основан на данных вашего дома.';c.innerHTML+=`<div class="msg ai">${a}</div>`;q.value='';c.scrollTop=c.scrollHeight}
+</script></body></html>
