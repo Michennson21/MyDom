@@ -1,5 +1,5 @@
-const CACHE='mydom-nalchik-v28-screen-design';
-const CORE=['./','./index.html','./design.css','./manifest.webmanifest','./icon-192.png','./icon-512.png','./qr.js','./vendor/jsQR-1.4.0.js','./vendor/zxing-0.21.3.min.js','./vendor/zxing-wasm-3.1.5.js','./vendor/zxing-wasm-3.1.5.wasm'];
+const CACHE='mydom-nalchik-v29-welcome-save';
+const CORE=['./','./index.html','./design.css','./manifest.webmanifest','./icon-192.png','./icon-512.png','./qr.js','./welcome.js','./vendor/jsQR-1.4.0.js','./vendor/zxing-0.21.3.min.js','./vendor/zxing-wasm-3.1.5.js','./vendor/zxing-wasm-3.1.5.wasm'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('mydom-nalchik-')&&k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
 self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;event.respondWith(fetch(event.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(event.request,copy));return r;}).catch(()=>caches.match(event.request).then(r=>r||caches.match('./index.html'))));});

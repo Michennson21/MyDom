@@ -186,25 +186,37 @@ function showQRResult(code){
   const currentAddress=savedAddress?`${savedAddress.street}, д. ${savedAddress.house}, кв. ${savedAddress.apartment}`:'Адрес в приложении не выбран';
   const providers=[...qrEl('billProvider').options].map(o=>o.value);
   const details=[['Получатель',x.recipient],['ИНН',x.fields.payeeinn],['Расчётный счёт получателя',x.fields.personalacc],['Банк',x.fields.bankname],['БИК',x.fields.bic],['Адрес в QR',x.address],['Назначение',x.purpose]];
-  qrEl('qrResult').innerHTML=`<div class="notice" style="margin-top:12px">Сохранение добавит начисление. Оплата и отправка поставщику не выполняются.</div>${details.filter(([,v])=>v).map(([k,v])=>`<div class="field"><b>${k}</b><span style="overflow-wrap:anywhere">${escapeHtml(v)}</span></div>`).join('')}<p class="muted">Ваш адрес: ${escapeHtml(currentAddress)}</p><label class="formlabel" for="qrProvider">Услуга / поставщик *</label><select id="qrProvider" class="input"><option value="">Выберите, к какой услуге относится квитанция</option>${providers.map(p=>`<option>${escapeHtml(p)}</option>`).join('')}</select><label class="formlabel" for="qrAccount">Лицевой счёт *</label><input id="qrAccount" class="input" value="${escapeHtml(x.account)}" placeholder="Нет в QR — введите вручную"><label class="formlabel" for="qrPeriod">Период *</label><input id="qrPeriod" class="input" value="${escapeHtml(x.period)}" placeholder="Нет в QR — например, 09.2026"><label class="formlabel" for="qrTotal">К оплате, ₽ *</label><input id="qrTotal" class="input" inputmode="decimal" value="${escapeHtml(x.total.replace('.',','))}" placeholder="Нет в QR — введите вручную"><label style="display:flex;gap:8px;margin-top:14px;font-size:13px"><input type="checkbox" id="qrConfirmed">Я сверил получателя, адрес, лицевой счёт, период и сумму с квитанцией</label><button id="qrSave" class="btn block" onclick="saveQRBill()">Сохранить начисление</button>${qrCandidates.length>1?'<button class="btn secondary block" onclick="showQRChoices()">Выбрать другой QR</button>':''}`;
+  qrEl('qrResult').innerHTML=`<div class="notice" style="margin-top:12px">Сохранение добавит начисление. Оплата и отправка поставщику не выполняются.</div>${details.filter(([,v])=>v).map(([k,v])=>`<div class="field"><b>${k}</b><span style="overflow-wrap:anywhere">${escapeHtml(v)}</span></div>`).join('')}<p class="muted">Ваш адрес: ${escapeHtml(currentAddress)}</p><label class="formlabel" for="qrProvider">Услуга / поставщик *</label><select id="qrProvider" class="input"><option value="">Выберите, к какой услуге относится квитанция</option>${providers.map(p=>`<option>${escapeHtml(p)}</option>`).join('')}</select><label class="formlabel" for="qrAccount">Лицевой счёт *</label><input id="qrAccount" class="input" value="${escapeHtml(x.account)}" placeholder="Нет в QR — введите вручную"><label class="formlabel" for="qrPeriod">Период *</label><input id="qrPeriod" class="input" value="${escapeHtml(x.period)}" placeholder="Нет в QR — например, 09.2026"><label class="formlabel" for="qrTotal">К оплате, ₽ *</label><input id="qrTotal" class="input" inputmode="decimal" value="${escapeHtml(x.total.replace('.',','))}" placeholder="Нет в QR — введите вручную"><label style="display:flex;gap:8px;margin-top:14px;font-size:13px"><input type="checkbox" id="qrConfirmed">Я сверил получателя, адрес, лицевой счёт, период и сумму с квитанцией</label><div id="qrSaveError" role="alert" tabindex="-1" style="margin-top:12px"></div><button id="qrSave" class="btn block" onclick="saveQRBill()">Сохранить начисление</button>${qrCandidates.length>1?'<button class="btn secondary block" onclick="showQRChoices()">Выбрать другой QR</button>':''}`;
+}
+function qrSaveError(message,field){
+  const box=qrEl('qrSaveError');
+  if(box){box.className='notice';box.textContent=message;box.scrollIntoView({block:'center',behavior:'smooth'});box.focus({preventScroll:true});}
+  else qrStatus(message);
+  if(field)qrEl(field)?.setAttribute('aria-invalid','true');
 }
 function saveQRBill(){
+  const errorBox=qrEl('qrSaveError');if(errorBox){errorBox.textContent='';errorBox.className='';}
+  document.querySelectorAll('#qrResult [aria-invalid]').forEach(x=>x.removeAttribute('aria-invalid'));
+
   if(!qrDraft)return;
   const provider=qrEl('qrProvider').value,account=qrEl('qrAccount').value.trim(),period=qrEl('qrPeriod').value.trim();
   const totalText=qrEl('qrTotal').value.replace(/\s/g,'').replace(',','.');
-  if(!provider||!account||!period){qrStatus('Выберите услугу, укажите лицевой счёт и период.');return;}
-  if(!/^\d+(\.\d{1,2})?$/.test(totalText)||!Number.isSafeInteger(Math.round(Number(totalText)*100))){qrStatus('Введите сумму в рублях: например, 1250,50.');return;}
-  if(!qrEl('qrConfirmed').checked){qrStatus('Сверьте данные с квитанцией и отметьте подтверждение.');return;}
+  if(!provider){qrSaveError('Выберите услугу / поставщика в форме выше.','qrProvider');return;}
+  if(!account){qrSaveError('Укажите лицевой счёт жильца.','qrAccount');return;}
+  if(!period){qrSaveError('Укажите расчётный период.','qrPeriod');return;}
+  if(!/^\d+(\.\d{1,2})?$/.test(totalText)||!Number.isSafeInteger(Math.round(Number(totalText)*100))){qrSaveError('Введите сумму в рублях: например, 1250,50.');return;}
+  if(!qrEl('qrConfirmed').checked){qrSaveError('Сверьте данные с квитанцией и отметьте подтверждение.');return;}
   const periodKey=v=>String(v).toLowerCase().replace(/\s+/g,' ').trim();
-  if(manualBills.some(b=>b.qrRaw===qrDraft.raw || (b.provider===provider && b.account===account && periodKey(b.period)===periodKey(period)))){qrStatus('Это начисление уже есть. Откройте «Начисления» и при необходимости измените существующую запись.');return;}
+  if(manualBills.some(b=>b.qrRaw===qrDraft.raw || (b.provider===provider && b.account===account && periodKey(b.period)===periodKey(period)))){qrSaveError('Это начисление уже есть. Откройте «Начисления» и при необходимости измените существующую запись.');return;}
   const newAccounts=accounts.some(a=>a.provider===provider&&a.number===account)?accounts:[...accounts,{provider,number:account,icon:icons[provider]||'🏠'}];
   const record={id:Date.now(),provider,account,period,total:Number(totalText),accrued:0,debt:0,paid:0,paidDate:'',source:'qr',qrRaw:qrDraft.raw,qrFields:{...qrDraft.fields},address:qrDraft.address,createdAt:new Date().toISOString()};
   const newBills=[record,...manualBills];
   // Roll back both keys on storage failure, preserving the current in-memory state.
   const oldAccounts=localStorage.getItem('mydomAccounts'),oldBills=localStorage.getItem('mydomManualBills');
   try{localStorage.setItem('mydomAccounts',JSON.stringify(newAccounts));localStorage.setItem('mydomManualBills',JSON.stringify(newBills));}
-  catch(error){try{for(const [k,v] of [['mydomAccounts',oldAccounts],['mydomManualBills',oldBills]]){if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}}catch(_){}qrStatus('Не удалось сохранить данные в браузере. Освободите место и повторите.');return;}
+  catch(error){try{for(const [k,v] of [['mydomAccounts',oldAccounts],['mydomManualBills',oldBills]]){if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}}catch(_){}qrSaveError('Не удалось сохранить данные в браузере. Освободите место и повторите.');return;}
   accounts=newAccounts;manualBills=newBills;closeQR();renderAll();go('bills');
+  const confirmation=document.createElement('div');confirmation.className='success';confirmation.setAttribute('role','status');confirmation.textContent='Начисление сохранено. Лицевой счёт добавлен в ваши счета.';qrEl('billList').prepend(confirmation);
 }
 if(typeof document!=='undefined'){
   document.addEventListener('visibilitychange',()=>{if(document.hidden)stopQRCamera();});
