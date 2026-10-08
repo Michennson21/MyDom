@@ -46,14 +46,68 @@ function decodeQRImage(source,width,height){
   const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
   const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0,canvas.width,canvas.height);
   const data=ctx.getImageData(0,0,canvas.width,canvas.height);
-  return jsQR(data.data,data.width,data.height,{inversionAttempts:'attemptBoth'});
+  return decodeQRPixels(data);
 }
+function decodeQRPixels(data, secondary=true){
+  let result=jsQR(data.data,data.width,data.height,{inversionAttempts:'attemptBoth'});
+  if(result || !secondary || typeof ZXing==='undefined')return result;
+  // A second detector helps with dense or low-contrast printed QR symbols.
+  const luminance=new Uint8ClampedArray(data.width*data.height);
+  for(let p=0,i=0;p<luminance.length;p++,i+=4)luminance[p]=(data.data[i]+2*data.data[i+1]+data.data[i+2])/4;
+  const source=new ZXing.RGBLuminanceSource(luminance,data.width,data.height);
+  const hints=new Map([[ZXing.DecodeHintType.TRY_HARDER,true]]);
+  const reader=new ZXing.QRCodeReader();
+  for(const inverted of [false,true]){
+    try{
+      const bitmap=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(inverted?source.invert():source));
+      let decoded=reader.decode(bitmap,hints),text=decoded.getText();
+      if(/^ST0001[12]/.test(text)){
+        hints.set(ZXing.DecodeHintType.CHARACTER_SET,text.startsWith('ST00011')?'windows-1251':'UTF-8');
+        decoded=reader.decode(bitmap,hints);text=decoded.getText();
+      }
+      return {data:text};
+    }catch(error){/* Not found by this detector; try the next representation. */}
+    finally{reader.reset();}
+  }
+  return null;
+}
+function qrPhotoRegions(width,height){
+  const regions=[{x:0,y:0,w:width,h:height,max:1600},{x:0,y:0,w:width,h:height,max:900},{x:0,y:0,w:width,h:height,max:2600}];
+  // Overlapping tiles preserve small symbols without allocating a full-size canvas.
+  const tileW=Math.min(width,1600),tileH=Math.min(height,1600);
+  const nx=Math.min(5,Math.max(1,Math.ceil((width-tileW)/(tileW*.65))+1));
+  const ny=Math.min(5,Math.max(1,Math.ceil((height-tileH)/(tileH*.65))+1));
+  for(let y=0;y<ny;y++)for(let x=0;x<nx;x++)regions.push({x:Math.round(nx===1?0:x*(width-tileW)/(nx-1)),y:Math.round(ny===1?0:y*(height-tileH)/(ny-1)),w:tileW,h:tileH,max:1600});
+  return regions;
+}
+async function decodeQRPhoto(source,width,height,isCurrent=()=>true){
+  if(typeof jsQR!=='function')throw new Error('Модуль QR не загрузился. Обновите приложение с подключённым интернетом.');
+  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+  const regions=qrPhotoRegions(width,height);
+  for(let i=0;i<regions.length;i++){
+    if(!isCurrent())return null;
+    qrStatus(`Ищу QR-код на фото… ${i+1}/${regions.length}`);
+    // Yield between passes so close/new photo actions can cancel this search.
+    await new Promise(resolve=>setTimeout(resolve,0));
+    if(!isCurrent())return null;
+    const r=regions[i],scale=Math.min(2,r.max/Math.max(r.w,r.h)),padding=32;
+    const w=Math.max(1,Math.round(r.w*scale)),h=Math.max(1,Math.round(r.h*scale));
+    canvas.width=w+padding*2;canvas.height=h+padding*2;
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.imageSmoothingEnabled=scale<1;
+    ctx.drawImage(source,r.x,r.y,r.w,r.h,padding,padding,w,h);
+    const result=decodeQRPixels(ctx.getImageData(0,0,canvas.width,canvas.height));
+    if(result)return result;
+  }
+  return null;
+}
+
 async function startQRCamera(){
   stopQRCamera();qrPhotoRun++;qrDraft=null;qrEl('qrResult').replaceChildren();
   if(!navigator.mediaDevices?.getUserMedia){qrStatus('Камера недоступна в этом браузере. Выберите фото QR-кода.');return;}
   const run=qrRun;qrEl('qrCamera').disabled=true;qrStatus('Разрешите доступ к камере.');
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
     if(run!==qrRun){stream.getTracks().forEach(t=>t.stop());return;}
     qrStream=stream;const video=qrEl('qrVideo');video.srcObject=stream;video.style.display='block';qrEl('qrStop').style.display='block';
     await video.play();if(run!==qrRun)return;qrStatus('Держите один QR-код в кадре, крупно и без бликов.');
@@ -73,8 +127,9 @@ async function readQRPhoto(file){
   try{
     const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url;});
     if(run!==qrPhotoRun)return;
-    const code=decodeQRImage(img,img.naturalWidth,img.naturalHeight);
-    if(!code){qrStatus('QR-код не найден. Сфотографируйте только код крупным планом, без бликов и размытия.');return;}
+    const code=await decodeQRPhoto(img,img.naturalWidth,img.naturalHeight,()=>run===qrPhotoRun);
+    if(run!==qrPhotoRun)return;
+    if(!code){qrStatus('Не удалось прочитать QR после нескольких попыток. Обрежьте фото вокруг одного кода, оставив белую рамку, и загрузите снова. Если не поможет — введите начисление вручную.');return;}
     showQRResult(code);
   }catch(error){if(run===qrPhotoRun)qrStatus(error.message||'Не удалось прочитать фото. Попробуйте JPG или PNG.');}
   finally{URL.revokeObjectURL(url);}
@@ -111,4 +166,4 @@ if(typeof document!=='undefined'){
   window.addEventListener('pagehide',stopQRCamera);
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&qrEl('qrModal').classList.contains('show'))closeQR();});
 }
-if(typeof module!=='undefined' && module.exports)module.exports={parseReceiptQR,receiptQRText};
+if(typeof module!=='undefined' && module.exports)module.exports={parseReceiptQR,receiptQRText,qrPhotoRegions};
