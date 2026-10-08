@@ -179,6 +179,27 @@ async function readQRPhoto(file){
   }catch(error){if(run===qrPhotoRun)qrStatus(error.message||'Не удалось прочитать фото. Попробуйте JPG или PNG.');}
   finally{if(url)URL.revokeObjectURL(url);}
 }
+// INNs below are taken from the supplied receipts; this is classification, not recipient verification.
+function detectQRProvider(receipt, providers){
+  const normalize=value=>String(value||'').trim().toLowerCase().replaceAll('ё','е').replace(/[«»"“”„]/g,'').replace(/^(?:ооо|муп|ао|пао|гуп)\s+/,'').replace(/\s+/g,' ').trim();
+  const known=[
+    {provider:'Экотехпром',inn:'0726008909',names:['экотехпром']},
+    {provider:'Нальчикская теплоснабжающая компания',inn:'0700005477',names:['нтс','нальчикские тепловые сети','нальчикская теплоснабжающая компания']}
+  ];
+  const inn=String(receipt.fields?.payeeinn||'').trim(),name=normalize(receipt.recipient);
+  const byInn=known.find(x=>x.inn===inn);
+  const byName=known.find(x=>x.names.includes(name));
+  if(byInn){
+    if(byName&&byName!==byInn)return null;
+    return providers.includes(byInn.provider)?{provider:byInn.provider,basis:'ИНН получателя'}:null;
+  }
+  if(byName){
+    if(inn&&inn!==byName.inn)return null;
+    return providers.includes(byName.provider)?{provider:byName.provider,basis:'названию получателя'}:null;
+  }
+  const matches=providers.filter(p=>!['Другое','Управляющая компания'].includes(p)&&normalize(p)===name);
+  return matches.length===1?{provider:matches[0],basis:'названию получателя'}:null;
+}
 function showQRResult(code){
   try{qrDraft=parseReceiptQR(receiptQRText(code));}catch(error){qrDraft=null;qrStatus(error.message);return;}
   qrStatus('QR-код прочитан. Проверьте данные перед сохранением.');
@@ -186,7 +207,9 @@ function showQRResult(code){
   const currentAddress=savedAddress?`${savedAddress.street}, д. ${savedAddress.house}, кв. ${savedAddress.apartment}`:'Адрес в приложении не выбран';
   const providers=[...qrEl('billProvider').options].map(o=>o.value);
   const details=[['Получатель',x.recipient],['ИНН',x.fields.payeeinn],['Расчётный счёт получателя',x.fields.personalacc],['Банк',x.fields.bankname],['БИК',x.fields.bic],['Адрес в QR',x.address],['Назначение',x.purpose]];
-  qrEl('qrResult').innerHTML=`<div class="notice" style="margin-top:12px">Сохранение добавит начисление. Оплата и отправка поставщику не выполняются.</div>${details.filter(([,v])=>v).map(([k,v])=>`<div class="field"><b>${k}</b><span style="overflow-wrap:anywhere">${escapeHtml(v)}</span></div>`).join('')}<p class="muted">Ваш адрес: ${escapeHtml(currentAddress)}</p><label class="formlabel" for="qrProvider">Услуга / поставщик *</label><select id="qrProvider" class="input"><option value="">Выберите, к какой услуге относится квитанция</option>${providers.map(p=>`<option>${escapeHtml(p)}</option>`).join('')}</select><label class="formlabel" for="qrAccount">Лицевой счёт *</label><input id="qrAccount" class="input" value="${escapeHtml(x.account)}" placeholder="Нет в QR — введите вручную"><label class="formlabel" for="qrPeriod">Период *</label><input id="qrPeriod" class="input" value="${escapeHtml(x.period)}" placeholder="Нет в QR — например, 09.2026"><label class="formlabel" for="qrTotal">К оплате, ₽ *</label><input id="qrTotal" class="input" inputmode="decimal" value="${escapeHtml(x.total.replace('.',','))}" placeholder="Нет в QR — введите вручную"><label style="display:flex;gap:8px;margin-top:14px;font-size:13px"><input type="checkbox" id="qrConfirmed">Я сверил получателя, адрес, лицевой счёт, период и сумму с квитанцией</label><div id="qrSaveError" role="alert" tabindex="-1" style="margin-top:12px"></div><button id="qrSave" class="btn block" onclick="saveQRBill()">Сохранить начисление</button>${qrCandidates.length>1?'<button class="btn secondary block" onclick="showQRChoices()">Выбрать другой QR</button>':''}`;
+  qrEl('qrResult').innerHTML=`<div class="notice" style="margin-top:12px">Сохранение добавит начисление. Оплата и отправка поставщику не выполняются.</div>${details.filter(([,v])=>v).map(([k,v])=>`<div class="field"><b>${k}</b><span style="overflow-wrap:anywhere">${escapeHtml(v)}</span></div>`).join('')}<p class="muted">Ваш адрес: ${escapeHtml(currentAddress)}</p><label class="formlabel" for="qrProvider">Услуга / поставщик *</label><select id="qrProvider" class="input" aria-describedby="qrProviderHint" onchange="document.getElementById('qrProviderHint').textContent='Поставщик выбран вручную.'"><option value="">Выберите, к какой услуге относится квитанция</option>${providers.map(p=>`<option>${escapeHtml(p)}</option>`).join('')}</select><div id="qrProviderHint" class="muted" style="margin-top:6px">Не удалось однозначно определить услугу. Выберите её вручную.</div><label class="formlabel" for="qrAccount">Лицевой счёт *</label><input id="qrAccount" class="input" value="${escapeHtml(x.account)}" placeholder="Нет в QR — введите вручную"><label class="formlabel" for="qrPeriod">Период *</label><input id="qrPeriod" class="input" value="${escapeHtml(x.period)}" placeholder="Нет в QR — например, 09.2026"><label class="formlabel" for="qrTotal">К оплате, ₽ *</label><input id="qrTotal" class="input" inputmode="decimal" value="${escapeHtml(x.total.replace('.',','))}" placeholder="Нет в QR — введите вручную"><label style="display:flex;gap:8px;margin-top:14px;font-size:13px"><input type="checkbox" id="qrConfirmed">Я сверил получателя, адрес, лицевой счёт, период и сумму с квитанцией</label><div id="qrSaveError" role="alert" tabindex="-1" style="margin-top:12px"></div><button id="qrSave" class="btn block" onclick="saveQRBill()">Сохранить начисление</button>${qrCandidates.length>1?'<button class="btn secondary block" onclick="showQRChoices()">Выбрать другой QR</button>':''}`;
+  const detected=detectQRProvider(x,providers);
+  if(detected){qrEl('qrProvider').value=detected.provider;qrEl('qrProviderHint').textContent='Подставлено по '+detected.basis+'. Проверьте; при необходимости измените.';}
 }
 function qrSaveError(message,field){
   const box=qrEl('qrSaveError');
@@ -223,4 +246,4 @@ if(typeof document!=='undefined'){
   window.addEventListener('pagehide',stopQRCamera);
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&qrEl('qrModal').classList.contains('show'))closeQR();});
 }
-if(typeof module!=='undefined' && module.exports)module.exports={parseReceiptQR,receiptQRText,qrPhotoRegions};
+if(typeof module!=='undefined' && module.exports)module.exports={parseReceiptQR,receiptQRText,qrPhotoRegions,detectQRProvider};
