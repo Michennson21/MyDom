@@ -1,0 +1,5 @@
+.git
+server/data
+*.sqlite*
+.env
+node_modules
