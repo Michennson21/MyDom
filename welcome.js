@@ -21,4 +21,4 @@ const welcomeSaveAccount=saveAccount;saveAccount=function(){welcomeSaveAccount()
 if(!localStorage.getItem('mydomWelcomeDone')&&!savedAddress&&!accounts.length&&!manualBills.length)startWelcome();
 
 // Load the independent meter-history screen after the shared application is ready.
-const meterModule=document.createElement("script");meterModule.src="meters.js";document.body.append(meterModule);
+const meterModule=document.createElement("script");meterModule.src="meters.js";meterModule.onload=()=>{const apartmentsModule=document.createElement("script");apartmentsModule.src="apartments.js";document.body.append(apartmentsModule);};document.body.append(meterModule);
