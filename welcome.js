@@ -19,3 +19,6 @@ function closeWelcome(completed){if(completed){try{localStorage.setItem('mydomWe
 const welcomeSaveAddress=saveAddress;saveAddress=function(){welcomeSaveAddress();if(welcome.classList.contains('show')&&!document.getElementById('addressModal').classList.contains('show'))renderWelcome();};
 const welcomeSaveAccount=saveAccount;saveAccount=function(){welcomeSaveAccount();if(welcome.classList.contains('show')&&!document.getElementById('accountModal').classList.contains('show'))renderWelcome();};
 if(!localStorage.getItem('mydomWelcomeDone')&&!savedAddress&&!accounts.length&&!manualBills.length)startWelcome();
+
+// Load the independent meter-history screen after the shared application is ready.
+const meterModule=document.createElement("script");meterModule.src="meters.js";document.body.append(meterModule);
