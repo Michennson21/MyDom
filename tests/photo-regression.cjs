@@ -17,7 +17,7 @@ const raw='ST00012|Name=Тестовый водоканал|PersonalAcc=40702810
   if(req.url==='/fixture.png'){res.setHeader('Content-Type','image/png');res.end(photo);return;}
   const name=req.url==='/'?'index.html':req.url.slice(1),file=path.resolve(root,name);
   if(!file.startsWith(root+path.sep))throw Error('path');
-  res.setHeader('Content-Type',name.endsWith('.js')?'application/javascript':name.endsWith('.png')?'image/png':'text/html');res.end(fs.readFileSync(file));
+  res.setHeader('Content-Type',name.endsWith('.js')?'application/javascript':name.endsWith('.png')?'image/png':name.endsWith('.wasm')?'application/wasm':'text/html');res.end(fs.readFileSync(file));
  }catch(e){res.statusCode=404;res.end();}});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
  try{
@@ -28,11 +28,24 @@ const raw='ST00012|Name=Тестовый водоканал|PersonalAcc=40702810
   assert.equal(before,false,'fixture must reproduce the previous detector failure');
   await page.evaluate(()=>openQR());await page.locator('#qrPhoto').setInputFiles({name:'receipt.png',mimeType:'image/png',buffer:photo});
   await page.locator('#qrAccount').waitFor({timeout:30000});assert.equal(await page.locator('#qrAccount').inputValue(),'00001234');assert.equal(await page.locator('#qrTotal').inputValue(),'1234,56');
-  await page.evaluate(()=>{closeQR();openQR();window.savedDecoder=jsQR;window.jsQR=()=>null;});
+  await page.evaluate(()=>{closeQR();openQR();window.savedDecoder=jsQR;window.savedWasm=ZXingWASM;window.jsQR=()=>null;window.ZXingWASM=undefined;});
   await page.locator('#qrPhoto').setInputFiles({name:'qr.png',mimeType:'image/png',buffer:tinyBuffer});await page.locator('#qrAccount').waitFor({timeout:30000});assert.ok((await page.locator('#qrResult').innerText()).includes('Тестовый водоканал'));
-  await page.evaluate(()=>{jsQR=window.savedDecoder;closeQR();openQR();});
+  await page.evaluate(()=>{jsQR=window.savedDecoder;ZXingWASM=window.savedWasm;closeQR();openQR();});
   await page.locator('#qrPhoto').setInputFiles({name:'receipt.png',mimeType:'image/png',buffer:photo});await page.evaluate(()=>closeQR());await page.waitForTimeout(100);
-  assert.equal(await page.evaluate(()=>qrDraft),null);assert.deepEqual(errors,[]);
-  console.log('PASS: reproduced old failure; new multi-pass photo detection; Cyrillic fallback; cancellation');
+  assert.equal(await page.evaluate(()=>qrDraft),null);
+  // A page containing an unrelated URL and two bank variants must offer payment choices.
+  const combined=new PNG({width:2400,height:1000});combined.data.fill(255);
+  const values=['https://example.test/info',raw,raw.replace('40702810000000000001','40702810000000000002').replace('Тестовый банк','Второй банк')];
+  for(let i=0;i<values.length;i++){
+    const tile=PNG.sync.read(await QRCode.toBuffer(values[i],{width:600,margin:4,errorCorrectionLevel:'M'}));
+    PNG.bitblt(tile,combined,0,0,tile.width,tile.height,40+780*i,100);
+  }
+  await page.evaluate(()=>openQR());await page.locator('#qrPhoto').setInputFiles({name:'multiple.png',mimeType:'image/png',buffer:PNG.sync.write(combined)});
+  await page.waitForFunction(()=>qrCandidates.length===2);
+  assert.equal(await page.locator('#qrResult .mini').count(),2);
+  await page.locator('#qrResult .mini').first().click();assert.equal(await page.locator('#qrTotal').inputValue(),'1234,56');
+  await page.getByRole('button',{name:'Выбрать другой QR'}).click();await page.locator('#qrResult .mini').nth(1).click();assert.equal(await page.locator('#qrAccount').inputValue(),'00001234');
+  assert.deepEqual(errors,[]);
+  console.log('PASS: reproduced old failure; new multi-pass photo detection; Cyrillic fallback; cancellation; multiple payment QR vs unrelated URL');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

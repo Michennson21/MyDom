@@ -29,11 +29,42 @@ function receiptQRText(code) {
   if(header==='ST00012') return new TextDecoder('utf-8',{fatal:true}).decode(bytes);
   return code.data||'';
 }
+let qrWasmConfigured=false, qrCandidates=[];
+async function readAllQRCodes(input){
+  if(typeof ZXingWASM==='undefined')return [];
+  if(!qrWasmConfigured){
+    const wasmURL=new URL('./vendor/zxing-wasm-3.1.5.wasm',document.baseURI).href;
+    ZXingWASM.prepareZXingModule({overrides:{locateFile:(path,prefix)=>path.endsWith('.wasm')?wasmURL:prefix+path}});
+    qrWasmConfigured=true;
+  }
+  const results=await ZXingWASM.readBarcodes(input,{formats:['QRCode'],tryHarder:true,tryRotate:true,tryInvert:true,maxNumberOfSymbols:10});
+  return results.filter(r=>r.isValid).map(r=>({data:r.text,binaryData:r.bytes}));
+}
+function isPaymentQR(code){try{return /^ST0001[12]\|/.test(receiptQRText(code).trim());}catch(error){return false;}}
+function showQRResults(codes){
+  const unique=new Map();
+  for(const code of codes){if(!isPaymentQR(code))continue;try{const text=receiptQRText(code).trim();unique.set(text,{code,draft:parseReceiptQR(text)});}catch(error){/* An invalid code must not hide a valid one on the same page. */}}
+  qrCandidates=[...unique.values()];
+  if(qrCandidates.length===1){showQRResult(qrCandidates[0].code);return;}
+  if(qrCandidates.length>1){showQRChoices();return;}
+  if(codes.length){showQRResult(codes.find(isPaymentQR)||codes[0]);return;}
+  qrStatus('Платёжный QR не найден. Выберите фото одного кода с белой рамкой вокруг него.');
+}
+function showQRChoices(){
+  qrDraft=null;qrStatus(`Найдено платёжных QR: ${qrCandidates.length}. Выберите вариант по банку и реквизитам. Обычные ссылки пропущены.`);
+  qrEl('qrResult').innerHTML='<div class="notice">На квитанции могут быть варианты для разных банков. Сохранение одного варианта добавит одно начисление.</div>';
+  qrCandidates.forEach(({draft},index)=>{
+    const button=document.createElement('button');button.className='mini';button.style.cssText='width:100%;text-align:left;margin-top:10px;overflow-wrap:anywhere';
+    button.innerHTML=`<b>${escapeHtml(draft.recipient)}</b><div>${escapeHtml(draft.fields.bankname||'Банк не указан')}</div><div class="muted">Расчётный счёт: ${escapeHtml(draft.fields.personalacc||'не указан')}</div><div>Л/с ${escapeHtml(draft.account||'не указан')} · ${draft.total?escapeHtml(moneyRu(Number(draft.total))):'Сумма не указана'}</div>`;
+    button.addEventListener('click',()=>showQRResult(qrCandidates[index].code));qrEl('qrResult').append(button);
+  });
+}
+
 let qrStream=null, qrTimer=null, qrRun=0, qrDraft=null, qrPhotoRun=0;
 const qrEl=id=>document.getElementById(id);
 function qrStatus(message){qrEl('qrStatus').textContent=message;}
-function openQR(){stopQRCamera();qrPhotoRun++;qrDraft=null;qrEl('qrResult').replaceChildren();qrStatus('Выберите камеру или фото QR-кода.');qrEl('qrModal').classList.add('show');}
-function closeQR(){stopQRCamera();qrPhotoRun++;qrDraft=null;qrEl('qrModal').classList.remove('show');}
+function openQR(){stopQRCamera();qrPhotoRun++;qrCandidates=[];qrDraft=null;qrEl('qrResult').replaceChildren();qrStatus('Выберите камеру или фото QR-кода.');qrEl('qrModal').classList.add('show');}
+function closeQR(){stopQRCamera();qrPhotoRun++;qrCandidates=[];qrDraft=null;qrEl('qrModal').classList.remove('show');}
 function stopQRCamera(){
   qrRun++; clearTimeout(qrTimer);qrTimer=null;
   if(qrStream) qrStream.getTracks().forEach(t=>t.stop());
@@ -83,7 +114,7 @@ function qrPhotoRegions(width,height){
 async function decodeQRPhoto(source,width,height,isCurrent=()=>true){
   if(typeof jsQR!=='function')throw new Error('Модуль QR не загрузился. Обновите приложение с подключённым интернетом.');
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
-  const regions=qrPhotoRegions(width,height);
+  const regions=qrPhotoRegions(width,height);let unsupported=null;
   for(let i=0;i<regions.length;i++){
     if(!isCurrent())return null;
     qrStatus(`Ищу QR-код на фото… ${i+1}/${regions.length}`);
@@ -97,13 +128,13 @@ async function decodeQRPhoto(source,width,height,isCurrent=()=>true){
     ctx.imageSmoothingEnabled=scale<1;
     ctx.drawImage(source,r.x,r.y,r.w,r.h,padding,padding,w,h);
     const result=decodeQRPixels(ctx.getImageData(0,0,canvas.width,canvas.height));
-    if(result)return result;
+    if(result){if(isPaymentQR(result))return result;unsupported??=result;}
   }
-  return null;
+  return unsupported;
 }
 
 async function startQRCamera(){
-  stopQRCamera();qrPhotoRun++;qrDraft=null;qrEl('qrResult').replaceChildren();
+  stopQRCamera();qrPhotoRun++;qrCandidates=[];qrDraft=null;qrEl('qrResult').replaceChildren();
   if(!navigator.mediaDevices?.getUserMedia){qrStatus('Камера недоступна в этом браузере. Выберите фото QR-кода.');return;}
   const run=qrRun;qrEl('qrCamera').disabled=true;qrStatus('Разрешите доступ к камере.');
   try{
@@ -111,28 +142,42 @@ async function startQRCamera(){
     if(run!==qrRun){stream.getTracks().forEach(t=>t.stop());return;}
     qrStream=stream;const video=qrEl('qrVideo');video.srcObject=stream;video.style.display='block';qrEl('qrStop').style.display='block';
     await video.play();if(run!==qrRun)return;qrStatus('Держите один QR-код в кадре, крупно и без бликов.');
-    const scan=()=>{
+    const scan=async()=>{
       if(run!==qrRun)return;
-      try{if(video.readyState>=2 && video.videoWidth){const code=decodeQRImage(video,video.videoWidth,video.videoHeight);if(code){stopQRCamera();showQRResult(code);return;}}}
-      catch(error){stopQRCamera();qrStatus(error.message);return;}
-      qrTimer=setTimeout(scan,300);
+      try{if(video.readyState>=2 && video.videoWidth){
+        const canvas=document.createElement('canvas'),scale=Math.min(1,1800/Math.max(video.videoWidth,video.videoHeight));
+        canvas.width=Math.round(video.videoWidth*scale);canvas.height=Math.round(video.videoHeight*scale);
+        const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(video,0,0,canvas.width,canvas.height);
+        const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
+        let codes=[];try{codes=await readAllQRCodes(pixels);}catch(error){console.warn('QR decoder unavailable',error);}
+        if(run!==qrRun)return;
+        if(!codes.some(isPaymentQR)){const fallback=decodeQRPixels(pixels);if(fallback)codes.push(fallback);}
+        if(codes.some(isPaymentQR)){stopQRCamera();showQRResults(codes);return;}
+        if(codes.length)qrStatus('В кадре QR со ссылкой или другого формата. Наведите камеру на платёжный QR квитанции.');
+      }}catch(error){if(run!==qrRun)return;stopQRCamera();qrStatus(error.message);return;}
+      if(run===qrRun)qrTimer=setTimeout(scan,400);
     };scan();
   }catch(error){if(run!==qrRun)return;stopQRCamera();qrStatus('Не удалось открыть камеру. Разрешите доступ в настройках браузера или выберите фото.');}
 }
 async function readQRPhoto(file){
-  if(!file)return;stopQRCamera();const run=++qrPhotoRun;qrDraft=null;qrEl('qrResult').replaceChildren();
+  if(!file)return;stopQRCamera();const run=++qrPhotoRun;qrCandidates=[];qrDraft=null;qrEl('qrResult').replaceChildren();
   if(file.size>20*1024*1024){qrStatus('Фото слишком большое. Выберите изображение до 20 МБ.');return;}
   if(file.type && !file.type.startsWith('image/')){qrStatus('Выберите изображение QR-кода (например, JPG или PNG).');return;}
-  qrStatus('Читаю QR-код…');const url=URL.createObjectURL(file);
+  qrStatus('Ищу все QR-коды на фото…');let url=null;
   try{
-    const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url;});
+    let codes=[];
+    try{codes=await readAllQRCodes(file);}catch(error){console.warn('QR decoder unavailable',error);}
     if(run!==qrPhotoRun)return;
-    const code=await decodeQRPhoto(img,img.naturalWidth,img.naturalHeight,()=>run===qrPhotoRun);
-    if(run!==qrPhotoRun)return;
-    if(!code){qrStatus('Не удалось прочитать QR после нескольких попыток. Обрежьте фото вокруг одного кода, оставив белую рамку, и загрузите снова. Если не поможет — введите начисление вручную.');return;}
-    showQRResult(code);
+    if(!codes.some(isPaymentQR)){
+      url=URL.createObjectURL(file);const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url;});
+      if(run!==qrPhotoRun)return;
+      const code=await decodeQRPhoto(img,img.naturalWidth,img.naturalHeight,()=>run===qrPhotoRun);
+      if(run!==qrPhotoRun)return;if(code)codes.push(code);
+    }
+    if(!codes.length){qrStatus('Не удалось прочитать QR после нескольких попыток. Обрежьте фото вокруг одного кода, оставив белую рамку, и загрузите снова. Если не поможет — введите начисление вручную.');return;}
+    showQRResults(codes);
   }catch(error){if(run===qrPhotoRun)qrStatus(error.message||'Не удалось прочитать фото. Попробуйте JPG или PNG.');}
-  finally{URL.revokeObjectURL(url);}
+  finally{if(url)URL.revokeObjectURL(url);}
 }
 function showQRResult(code){
   try{qrDraft=parseReceiptQR(receiptQRText(code));}catch(error){qrDraft=null;qrStatus(error.message);return;}
@@ -141,7 +186,7 @@ function showQRResult(code){
   const currentAddress=savedAddress?`${savedAddress.street}, д. ${savedAddress.house}, кв. ${savedAddress.apartment}`:'Адрес в приложении не выбран';
   const providers=[...qrEl('billProvider').options].map(o=>o.value);
   const details=[['Получатель',x.recipient],['ИНН',x.fields.payeeinn],['Расчётный счёт получателя',x.fields.personalacc],['Банк',x.fields.bankname],['БИК',x.fields.bic],['Адрес в QR',x.address],['Назначение',x.purpose]];
-  qrEl('qrResult').innerHTML=`<div class="notice" style="margin-top:12px">Сохранение добавит начисление. Оплата и отправка поставщику не выполняются.</div>${details.filter(([,v])=>v).map(([k,v])=>`<div class="field"><b>${k}</b><span style="overflow-wrap:anywhere">${escapeHtml(v)}</span></div>`).join('')}<p class="muted">Ваш адрес: ${escapeHtml(currentAddress)}</p><label class="formlabel" for="qrProvider">Услуга / поставщик *</label><select id="qrProvider" class="input"><option value="">Выберите, к какой услуге относится квитанция</option>${providers.map(p=>`<option>${escapeHtml(p)}</option>`).join('')}</select><label class="formlabel" for="qrAccount">Лицевой счёт *</label><input id="qrAccount" class="input" value="${escapeHtml(x.account)}" placeholder="Нет в QR — введите вручную"><label class="formlabel" for="qrPeriod">Период *</label><input id="qrPeriod" class="input" value="${escapeHtml(x.period)}" placeholder="Нет в QR — например, 09.2026"><label class="formlabel" for="qrTotal">К оплате, ₽ *</label><input id="qrTotal" class="input" inputmode="decimal" value="${escapeHtml(x.total.replace('.',','))}" placeholder="Нет в QR — введите вручную"><label style="display:flex;gap:8px;margin-top:14px;font-size:13px"><input type="checkbox" id="qrConfirmed">Я сверил получателя, адрес, лицевой счёт, период и сумму с квитанцией</label><button id="qrSave" class="btn block" onclick="saveQRBill()">Сохранить начисление</button>`;
+  qrEl('qrResult').innerHTML=`<div class="notice" style="margin-top:12px">Сохранение добавит начисление. Оплата и отправка поставщику не выполняются.</div>${details.filter(([,v])=>v).map(([k,v])=>`<div class="field"><b>${k}</b><span style="overflow-wrap:anywhere">${escapeHtml(v)}</span></div>`).join('')}<p class="muted">Ваш адрес: ${escapeHtml(currentAddress)}</p><label class="formlabel" for="qrProvider">Услуга / поставщик *</label><select id="qrProvider" class="input"><option value="">Выберите, к какой услуге относится квитанция</option>${providers.map(p=>`<option>${escapeHtml(p)}</option>`).join('')}</select><label class="formlabel" for="qrAccount">Лицевой счёт *</label><input id="qrAccount" class="input" value="${escapeHtml(x.account)}" placeholder="Нет в QR — введите вручную"><label class="formlabel" for="qrPeriod">Период *</label><input id="qrPeriod" class="input" value="${escapeHtml(x.period)}" placeholder="Нет в QR — например, 09.2026"><label class="formlabel" for="qrTotal">К оплате, ₽ *</label><input id="qrTotal" class="input" inputmode="decimal" value="${escapeHtml(x.total.replace('.',','))}" placeholder="Нет в QR — введите вручную"><label style="display:flex;gap:8px;margin-top:14px;font-size:13px"><input type="checkbox" id="qrConfirmed">Я сверил получателя, адрес, лицевой счёт, период и сумму с квитанцией</label><button id="qrSave" class="btn block" onclick="saveQRBill()">Сохранить начисление</button>${qrCandidates.length>1?'<button class="btn secondary block" onclick="showQRChoices()">Выбрать другой QR</button>':''}`;
 }
 function saveQRBill(){
   if(!qrDraft)return;
