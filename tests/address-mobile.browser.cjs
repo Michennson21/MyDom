@@ -56,6 +56,13 @@ const http=require('http'),fs=require('fs'),path=require('path'),assert=require(
   assert(await p.getByText('Возможно, касается вашего дома',{exact:true}).isVisible());
   assert(await p.getByText('Ваш адрес указан',{exact:true}).isVisible());
   assert.equal(await p.evaluate(()=>houseEvents.some(eventMatches)),false);
+  const feedPage=await browser.newPage();
+  await feedPage.route('**/api/outages',route=>route.fulfill({json:{schemaVersion:1,checkedAt:new Date().toISOString(),sources:{power:{state:'ok',lastSuccessAt:new Date().toISOString()},water:{state:'error',lastSuccessAt:null}},events:[{id:'feed-test',source:'Тест',title:'Тестовый график',description:'Проверка карточки',start:new Date(Date.now()+3600000).toISOString(),scope:{city:'Нальчик',type:'streets',streets:['Ленина'],complete:true}}]}}));
+  await feedPage.addInitScript(()=>{localStorage.setItem('mydomAddress',JSON.stringify({street:'Ленина',house:'12',apartment:'1'}));localStorage.setItem('mydomWelcomeDone','1');});
+  await feedPage.goto('http://localhost:8130');await feedPage.getByText('Тестовый график',{exact:true}).waitFor();
+  assert(await feedPage.getByText('В объявлении указана ваша улица; отдельные дома не уточнены.',{exact:true}).isVisible());
+  assert.equal(await feedPage.getByText('Сведения об отключениях не подключены',{exact:true}).count(),0);
+  assert(await feedPage.getByText(/Водоканал: ошибка загрузки/).isVisible());await feedPage.close();
   assert.deepEqual(errors,[]);console.log('PASS: home-only switcher, sorted clean numbers, suffixes, single street, checkbox clearing, Truzhenik 562, legacy nested address and workspace preservation, mobile/desktop widths');
  }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exit(1);});
