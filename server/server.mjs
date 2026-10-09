@@ -9,7 +9,7 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const hash=v=>createHash('sha256').update(v).digest('hex');
 const keys=new Set(['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory','mydomApartmentsV1','mydomWelcomeDone','mydomHouseEvents']);
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status});};
-export function createApp({database=process.env.DATABASE_PATH||'/data/mydom.sqlite',origin=process.env.APP_ORIGIN||'http://localhost:8080',invite=process.env.REGISTRATION_CODE||'',allowLocalRegistration=false}={}){
+export function createApp({database=process.env.DATABASE_PATH||'/data/mydom.sqlite',origin=process.env.APP_ORIGIN||'http://localhost:8080',invite=process.env.REGISTRATION_CODE||'',allowLocalRegistration=false,outagesPath=process.env.OUTAGES_PATH||''}={}){
  const url=new URL(origin);if(url.origin!==origin)throw Error('APP_ORIGIN must be an origin without a path');
  const local=['localhost','127.0.0.1'].includes(url.hostname);if(!local&&url.protocol!=='https:')throw Error('Production requires HTTPS APP_ORIGIN');
  if(database!==':memory:')mkdirSync(dirname(database),{recursive:true});
@@ -42,6 +42,10 @@ export function createApp({database=process.env.DATABASE_PATH||'/data/mydom.sqli
      }
      const token=randomBytes(32).toString('hex');db.prepare('DELETE FROM sessions WHERE expires<?').run(Date.now());db.prepare('INSERT INTO sessions VALUES(?,?,?)').run(hash(token),row.id,Date.now()+7*86400000);
      return send(200,{login:row.login},{'Set-Cookie':`mydom_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=604800${local?'':'; Secure'}`});
+    }
+    if(path==='/api/outages'&&req.method==='GET'){
+     if(!outagesPath)return send(503,{error:'Сбор объявлений ещё не настроен'});
+     try{const feed=JSON.parse(readFileSync(outagesPath,'utf8'));if(feed.schemaVersion!==1||!Array.isArray(feed.events))throw Error('invalid');return send(200,feed);}catch(e){return send(503,{error:'Файл объявлений пока недоступен'});}
     }
     const account=user(req);
     if(path==='/api/session'&&req.method==='GET')return send(200,{login:account.login});

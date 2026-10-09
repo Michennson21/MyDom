@@ -23,6 +23,10 @@
    const yes=s.addresses.some(a=>key({...a,city:s.city})===key(address));
    return yes?result('exact','Ваш адрес указан в объявлении.'):s.complete===true?result('outside','Адрес отсутствует в полном перечне этого объявления.'):unknown('Полнота перечня домов не подтверждена.');
   }
+  if(s.type==='streets'){
+   if(!Array.isArray(s.streets)||!s.streets.length||s.streets.some(x=>typeof x!=='string'||!x.trim()))return unknown('Перечень улиц не распознан.');
+   return s.streets.some(x=>street(x)===street(address.street))?result('zone','В объявлении указана ваша улица; отдельные дома не уточнены.'):s.complete===true?result('outside','В этом объявлении перечислены другие улицы.'):unknown('Полнота перечня улиц не подтверждена.');
+  }
   if(s.type==='range'){
    if(!s.street||!Number.isInteger(s.from)||!Number.isInteger(s.to)||s.from<0||s.to<s.from||!['all','odd','even'].includes(s.parity))return unknown('Диапазон домов требует уточнения.');
    if(street(s.street)!==street(address.street))return s.complete===true?result('outside','Указана другая улица.'):unknown('Полнота зоны не подтверждена.');
