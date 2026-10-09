@@ -11,7 +11,7 @@
  catch(e){alert('Не удалось открыть список квартир. Существующие данные не изменены.');return;}
  if(!registry){registry={active:null,homes:[]};if(savedAddress){const id=crypto.randomUUID();registry={active:id,homes:[{id,address:savedAddress,data:snapshot()}]};try{localStorage.setItem(registryKey,JSON.stringify(registry));}catch(e){alert('Не удалось сохранить список квартир. Данные не изменены.');return;}}}
  const panel=document.createElement('div');panel.className='card';panel.id='apartmentSwitcher';document.querySelector('.content').prepend(panel);
- function render(){const addressButton=document.querySelector('#home .address button');if(addressButton)addressButton.textContent='Выбрать / добавить квартиру';panel.innerHTML='<label class="formlabel" for="activeApartment">Ваша квартира</label><div><select id="activeApartment" class="input">'+(registry.homes.length?registry.homes.map(h=>'<option value="'+h.id+'"'+(h.id===registry.active?' selected':'')+'>'+escapeHtml(h.address.street+', '+h.address.house+', кв. '+h.address.apartment)+'</option>').join(''):'<option>Квартира не добавлена</option>')+'</select><button id="addApartment" class="btn secondary block">+ Квартира</button></div><div class="muted" style="margin-top:8px">Счета, начисления и показания относятся к выбранной квартире.</div>';
+ function render(){const addressButton=document.querySelector('#home .address button');if(addressButton)addressButton.textContent='Выбрать / добавить квартиру';panel.innerHTML='<label class="formlabel" for="activeApartment">Ваша квартира</label><div><select id="activeApartment" class="input">'+(registry.homes.length?registry.homes.map(h=>'<option value="'+h.id+'"'+(h.id===registry.active?' selected':'')+'>'+escapeHtml(h.address.street+', '+h.address.house+(h.address.isPrivate?' · частный дом':', кв. '+h.address.apartment))+'</option>').join(''):'<option>Квартира не добавлена</option>')+'</select><button id="addApartment" class="btn secondary block">+ Квартира</button></div><div class="muted" style="margin-top:8px">Счета, начисления и показания относятся к выбранной квартире.</div>';
  document.getElementById('addApartment').onclick=()=>{openAddress();document.querySelector('#addressModal h3').textContent='Добавить квартиру';};
  document.getElementById('activeApartment').onchange=e=>switchTo(e.target.value);
  }
@@ -25,11 +25,7 @@
  function switchTo(id){if(id===registry.active)return;const next=withCurrent(),target=next.homes.find(h=>h.id===id);if(!target)return;next.active=id;if(commit(next,target.data)){location.reload();}}
  // A changed address creates/selects another apartment; it never relabels existing bills.
  saveAddress=function(){
-  const st=document.getElementById('streetInput').value.trim(),house=document.getElementById('houseSelect').value,apartment=document.getElementById('apartmentInput').value.trim();
-  if(!st||!house||!apartment){alert('Выберите улицу, дом и укажите квартиру.');return;}
-  const db=findStreet(st);if(!db){alert('Выберите улицу из подсказок.');return;}
-  const canonicalHouse=[...db.houses].find(h=>normalizeHouse(h)===normalizeHouse(house))||house,org=findOrg(db.street,canonicalHouse);
-  const address={street:'ул. '+db.street,house:canonicalHouse,apartment,org:org?org.org:'',orgSource:org?org.source:'',gar:db.gar};
+  const address=window.addressSelection();if(!address)return;
   const next=withCurrent();let target=next.homes.find(h=>identity(h.address)===identity(address));
   if(!target){const data=next.homes.length?Object.fromEntries(workspaceKeys.map(k=>[k,null])):snapshot();data.mydomAddress=JSON.stringify(address);target={id:crypto.randomUUID(),address,data};next.homes.push(target);}
   next.active=target.id;
