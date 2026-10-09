@@ -51,6 +51,11 @@ const http=require('http'),fs=require('fs'),path=require('path'),assert=require(
    }
    await p.evaluate(()=>openAddress());assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await p.evaluate(()=>closeAddress());
   }
+  await p.waitForFunction(()=>!!window.OutageMatcher);
+  await p.evaluate(()=>{go('home');houseEvents=[{id:'synthetic-zone-test',title:'Проверка неопределённой зоны',scope:{city:'Нальчик',type:'polygon'},source:'Тест'}, {id:'synthetic-exact-test',title:'Проверка адреса',scope:{city:'Нальчик',type:'addresses',addresses:[{street:savedAddress.street,house:savedAddress.house}],complete:true},source:'Тест'}];renderHouseEvents();});
+  assert(await p.getByText('Возможно, касается вашего дома',{exact:true}).isVisible());
+  assert(await p.getByText('Ваш адрес указан',{exact:true}).isVisible());
+  assert.equal(await p.evaluate(()=>houseEvents.some(eventMatches)),false);
   assert.deepEqual(errors,[]);console.log('PASS: home-only switcher, sorted clean numbers, suffixes, single street, checkbox clearing, Truzhenik 562, legacy nested address and workspace preservation, mobile/desktop widths');
  }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exit(1);});
