@@ -35,6 +35,17 @@ const http=require('http'),fs=require('fs'),path=require('path'),assert=require(
   const firstId=await p.locator('#activeApartment option').first().getAttribute('value');
   await Promise.all([p.waitForEvent('load'),p.locator('#activeApartment').selectOption(firstId)]);await p.waitForSelector('#apartmentSwitcher');
   assert.equal(await p.evaluate(()=>localStorage.getItem('mydomWater')),'123');assert.equal(await p.evaluate(()=>savedAddress.apartment),'25');
+  await p.waitForFunction(()=>!!window.Management);await p.evaluate(()=>go('homeinfo'));
+  await p.locator('#managementChoice').selectOption('0700029189');await p.locator('#saveManagement').click();
+  assert.equal(await p.evaluate(()=>savedAddress.managementOverride.orgId),'0700029189');
+  await p.reload();await p.waitForFunction(()=>!!window.Management&&!!document.getElementById('managementChoice'));
+  assert.equal(await p.evaluate(()=>savedAddress.managementOverride.orgId),'0700029189');
+  const otherId=await p.locator('#activeApartment option').nth(1).getAttribute('value');
+  await Promise.all([p.waitForEvent('load'),p.locator('#activeApartment').selectOption(otherId)]);await p.waitForFunction(()=>!!window.Management&&!!document.getElementById('managementChoice'));
+  assert.equal(await p.evaluate(()=>!!savedAddress.managementOverride),false);
+  await Promise.all([p.waitForEvent('load'),p.locator('#activeApartment').selectOption(firstId)]);await p.waitForFunction(()=>!!window.Management&&!!document.getElementById('managementChoice'));
+  assert.equal(await p.evaluate(()=>localStorage.getItem('mydomWater')),'123');
+  await p.evaluate(()=>go('homeinfo'));await p.locator('#managementChoice').selectOption('');await p.locator('#saveManagement').click();assert.equal(await p.evaluate(()=>!!savedAddress.managementOverride),false);
   // Old nested addresses remain intact when reopened in the single street field.
   await p.evaluate(()=>{savedAddress={street:'сдт Горный Сад / Садовая',innerStreet:'Садовая',catalogCode:'legacy',house:'двлд12А',apartment:'',isPrivate:true};openAddress();});
   assert.equal(await p.locator('#streetInput').inputValue(),'сдт Горный Сад / Садовая');
