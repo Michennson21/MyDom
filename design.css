@@ -12,3 +12,5 @@ input,select,textarea,video,img{max-width:100%;min-width:0}
 @supports not (overflow:clip){html,body{overflow-x:hidden}}
 @media(max-width:600px){input,select,textarea{font-size:16px}.quick-actions .grid{grid-template-columns:repeat(2,minmax(0,1fr))}.service-total{white-space:normal}.provider-actions{padding-left:0;flex-wrap:wrap}}
 @media(min-width:850px){#home.active{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr)}}
+
+@media(min-width:850px){#home>#apartmentSwitcher{grid-column:1/-1;grid-row:1}#home>.address{grid-row:4}#home>#homeStatus{grid-row:4 / span 2}}
