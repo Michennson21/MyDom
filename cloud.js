@@ -1,7 +1,7 @@
 /* Explicit server save/restore. No local data leaves the browser before a user action. */
 (function(){
- const keys=['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory','mydomApartmentsV1','mydomWelcomeDone','mydomHouseEvents'];
- const workspaceKeys=['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory'];
+ const keys=['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory','mydomMetersV1','mydomApartmentsV1','mydomWelcomeDone','mydomHouseEvents'];
+ const workspaceKeys=['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory','mydomMetersV1'];
  let login=null,revision=null,remote=null,busy=false;
  const box=document.createElement('div');box.className='card';box.id='cloudAccount';document.getElementById('homeinfo').prepend(box);
  function status(message){document.getElementById('cloudStatus').textContent=message;}

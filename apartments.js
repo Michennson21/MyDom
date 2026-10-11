@@ -2,7 +2,7 @@
    The active workspace keys remain the source of truth until a switch. */
 (function(){
  const registryKey='mydomApartmentsV1';
- const workspaceKeys=['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory'];
+ const workspaceKeys=['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory','mydomMetersV1'];
  const snapshot=()=>Object.fromEntries(workspaceKeys.map(k=>[k,localStorage.getItem(k)]));
  const apply=data=>{for(const k of workspaceKeys){if(data[k]==null)localStorage.removeItem(k);else localStorage.setItem(k,data[k]);}};
  const identity=a=>JSON.stringify([a.street,window.cleanHouseNumber(a.house),a.apartment].map(v=>String(v||'').toLowerCase().replace(/\s+/g,' ').trim()));
@@ -42,3 +42,4 @@
  window.addEventListener('storage',e=>{if(e.key===registryKey)location.reload();});
  render();
 })();
+
