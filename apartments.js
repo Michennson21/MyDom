@@ -15,7 +15,10 @@
  addressCard.classList.add('with-apartment-switcher');
  addressCard.querySelector('button').hidden=true;
  addressCard.append(panel);
- function render(){panel.innerHTML='<div><select id="activeApartment" class="input" aria-label="Выбрать квартиру"'+(registry.homes.length?'':' disabled')+'>'+(registry.homes.length?registry.homes.map(h=>'<option value="'+h.id+'"'+(h.id===registry.active?' selected':'')+'>'+escapeHtml(h.address.street+', '+window.cleanHouseNumber(h.address.house)+(h.address.isPrivate?' · частный дом':', кв. '+h.address.apartment))+'</option>').join(''):'<option>Квартира не добавлена</option>')+'</select><button id="addApartment" class="btn secondary block">+ Добавить квартиру</button></div><div class="apartment-note">Счета, начисления и показания относятся к выбранной квартире.</div>';
+ const settings=document.createElement('div');settings.id='apartmentSettings';settings.className='card';
+ document.getElementById('homeinfo').prepend(settings);
+ function render(){panel.innerHTML='<div><select id="activeApartment" class="input" aria-label="Выбрать квартиру"'+(registry.homes.length?'':' disabled')+'>'+(registry.homes.length?registry.homes.map(h=>'<option value="'+h.id+'"'+(h.id===registry.active?' selected':'')+'>'+escapeHtml(h.address.street+', '+window.cleanHouseNumber(h.address.house)+(h.address.isPrivate?' · частный дом':', кв. '+h.address.apartment))+'</option>').join(''):'<option>Квартира не добавлена</option>')+'</select></div><div class="apartment-note">'+(registry.homes.length?'Счета, начисления и показания относятся к выбранной квартире.':'Добавьте первую квартиру в разделе «Ещё».')+'</div>';
+ settings.innerHTML='<div class="title">Квартиры</div><p class="muted">'+(registry.homes.length?'Сохранено адресов: '+registry.homes.length+'. Переключаться между ними можно на главной.':'Добавьте первую квартиру или частный дом, чтобы сохранять счета и показания по адресу.')+'</p><button id="addApartment" class="btn secondary block">+ Добавить квартиру</button>';
  document.getElementById('addApartment').onclick=()=>{openAddress();document.querySelector('#addressModal h3').textContent='Добавить квартиру';};
  document.getElementById('activeApartment').onchange=e=>switchTo(e.target.value);
  }
