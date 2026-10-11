@@ -23,7 +23,7 @@
   const formatDate = date => Number.isFinite(day(date)) ? date.split('-').reverse().join('.') : 'не указана';
   const addressKey = () => savedAddress ? JSON.stringify([savedAddress.street, savedAddress.house, savedAddress.apartment]) : '';
   const identity = m => [m.kind,m.provider,m.account,m.serial].map(v=>String(v||'').trim().toLowerCase()).join('|');
-  function history() { try { const rows=JSON.parse(localStorage.getItem('mydomMeterHistory')||'[]'); return Array.isArray(rows)?rows:[]; } catch (_) { return []; } }
+  function history() { try { const rows=JSON.parse(localStorage.getItem('mydomMeterHistory')||'[]'); return Array.isArray(rows)?rows.sort((a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt)):[]; } catch (_) { return []; } }
   function matches(row, m) {
     if (row.addressKey !== addressKey()) return false;
     if (row.meterId) return row.meterId === m.id;
@@ -32,7 +32,7 @@
   }
   const previous = id => { const m=meters.find(m=>m.id===id); return m ? history().find(r=>matches(r,m)) : undefined; };
   function events(m) { return m.status === 'archived' ? [] : [m.nextVerification ? {type:'verification',title:'Поверка',date:m.nextVerification} : null, m.actionDate && m.actionTitle ? {type:'action',title:m.actionTitle,date:m.actionDate} : null].filter(Boolean); }
-  async function commit(next) { try { await SafeStore.commit({[KEY]:JSON.stringify(next)}); } catch (_) { alert('Не удалось сохранить счётчик. Данные на экране не потеряны; освободите место и повторите.'); return false; } meters=next; return true; }
+  async function commit(next,rows) { try { await SafeStore.commit({[KEY]:JSON.stringify(next),...(rows?{mydomMeterHistory:JSON.stringify(rows)}:{})}); } catch (_) { alert('Не удалось сохранить счётчик. Данные на экране не потеряны; освободите место и повторите.'); return false; } meters=next; return true; }
   let modal;
   function close() { modal.classList.remove('show'); }
   function edit(existing = {}) {
@@ -73,13 +73,15 @@
       if(!data.serial)return fail('Укажите заводской номер счётчика.');
       if(meters.some(m=>m.id!==data.id&&identity(m)===identity(data)))return fail('Такой счётчик уже сохранён. Откройте его карточку.');
       if(['installed','commissioned','verification','nextVerification','actionDate'].some(k=>data[k]&&!Number.isFinite(day(data[k]))))return fail('Проверьте даты.');
+      if(['installed','commissioned'].some(k=>data[k]&&data[k]>today()))return fail('Дата выполненной установки или ввода не может быть в будущем.');
       if(data.verification&&data.verification>today())return fail('Дата уже выполненной поверки не может быть в будущем.');
       if(data.verification&&data.nextVerification&&data.nextVerification<=data.verification)return fail('Следующая поверка должна быть позже последней.');
       if(data.installed&&data.commissioned&&data.commissioned<data.installed)return fail('Ввод в эксплуатацию не может быть раньше установки.');
       if(Boolean(data.actionTitle)!==Boolean(data.actionDate))return fail('Для другого действия укажите и название, и дату.');
       data.readingIdentity=existing.readingIdentity||{kind:data.kind,provider:data.provider,account:data.account,serial:data.serial};
       data.updatedAt=new Date().toISOString();data.createdAt=existing.createdAt||data.updatedAt;
-      if(await commit([data,...meters.filter(m=>m.id!==data.id)])){close();render();}
+      const rows=history().map(r=>existing.id&&matches(r,existing)?{...r,meterId:data.id}:r);
+      if(await commit([data,...meters.filter(m=>m.id!==data.id)],rows)){close();window.MeterReadings?.reload();render();}
     };
     modal.classList.add('show');sheet.scrollTop=0;el('passport-serial').focus();
   }
@@ -129,8 +131,8 @@
     [['','Ввести данные вручную'],...available.map(m=>[m.id,m.kind+' · '+m.serial+(m.location?' · '+m.location:'')])].forEach(([v,t])=>{const o=add(s,'option',t);o.value=v;});
     const anchor=el('meterAccount').previousElementSibling;anchor.before(label,s);
     if(available.some(m=>m.id===selected))s.value=selected;
-    s.onchange=()=>{const m=meters.find(m=>m.id===s.value);if(!m)return;const options=[...el('meterAccount').options];const acc=accounts.filter(a=>['Водоканал','Нальчикская теплоснабжающая компания'].includes(a.provider));const index=acc.findIndex(a=>a.provider===m.provider&&a.number===m.account);if(index<0||!options[index])return;s.value=m.id;el('meterAccount').value=String(index);el('meterKind').value=m.kind;el('meterNumber').value=m.serial;el('meterValue').value='';const prev=previous(m.id);const f=el('meterFeedback');f.className='notice';f.textContent=prev?'Предыдущее сохранённое показание: '+prev.value+' м³':'Для этого счётчика показаний пока нет.';};
-    ['meterAccount','meterKind','meterNumber'].forEach(id=>el(id).oninput=()=>{s.value='';});
+    s.onchange=()=>{const m=meters.find(m=>m.id===s.value);['meterAccount','meterNumber'].forEach(id=>el(id).disabled=!!m);if(!m){el('meterAccount').dispatchEvent(new Event('change'));return;}const options=[...el('meterAccount').options];const acc=accounts.filter(a=>['Водоканал','Нальчикская теплоснабжающая компания'].includes(a.provider));const index=acc.findIndex(a=>a.provider===m.provider&&a.number===m.account);if(index<0||!options[index])return;s.value=m.id;el('meterAccount').value=String(index);el('meterKind').value=m.kind;el('meterNumber').value=m.serial;el('meterValue').value='';const prev=previous(m.id);const f=el('meterFeedback');f.className='notice';f.textContent=prev?'Предыдущее сохранённое показание: '+prev.value+' м³':'Для этого счётчика показаний пока нет.';};
+    ['meterAccount','meterNumber'].forEach(id=>el(id).disabled=!!s.value);
   }
   function renderHome() {
     let box=el('meterReminders');if(!box){box=add(el('home'),'div','','card');box.id='meterReminders';document.querySelector('#home .address').after(box);}box.replaceChildren();
@@ -147,11 +149,10 @@
     add(box,'p','Для выбранной квартиры. Проверьте сроки по документам; после выполненных работ обновите карточку.','muted');button(box,'Открыть счётчики',()=>go('meters'));window.HomeDesign?.renderAttention();
   }
   function render() {let box=el('meterPassports');if(!box){box=document.createElement('div');box.id='meterPassports';const section=el('meters');section.querySelector('.local-note').after(box);}box.replaceChildren();drawCards(box);wireReadings();renderHome();}
-  window.MeterRegistry={reload:()=>{meters=JSON.parse(localStorage.getItem(KEY)||'[]');render();},alerts:()=>{const rows=[];for(const m of meters){if(m.status==='archived')continue;for(const e of events(m)){const d=due(e.date);if(d.days<=60)rows.push({title:e.title+' · '+d.text,detail:m.kind+' № '+m.serial+' · '+formatDate(e.date),days:d.days});}if(!m.nextVerification)rows.push({title:'Уточните срок поверки',detail:m.kind+' № '+m.serial,days:999});if(m.status==='fault'||m.seal==='damaged')rows.push({title:'Проверьте состояние счётчика',detail:m.kind+' № '+m.serial,days:-Infinity});}if(failed)rows.push({title:'Не удалось прочитать счётчики',detail:'Проверьте сохранённые данные',days:-Infinity});return rows.sort((a,b)=>a.days-b.days);},render,renderHome,previous,due,calendar,today,edit,get:id=>meters.find(m=>m.id===id)};
+  window.MeterRegistry={reload:()=>{meters=JSON.parse(localStorage.getItem(KEY)||'[]');render();},alerts:()=>{const rows=[];for(const m of meters){if(m.status==='archived')continue;for(const e of events(m)){const d=due(e.date);if(d.days<=60)rows.push({title:e.title+' · '+d.text,detail:m.kind+' № '+m.serial+' · '+formatDate(e.date),days:d.days});}if(!m.nextVerification)rows.push({title:'Уточните срок поверки',detail:m.kind+' № '+m.serial,days:999});if(m.status==='fault'||m.seal==='damaged')rows.push({title:'Проверьте состояние счётчика',detail:m.kind+' № '+m.serial,days:-Infinity});}if(failed)rows.push({title:'Не удалось прочитать счётчики',detail:'Проверьте сохранённые данные',days:-Infinity});return rows.sort((a,b)=>a.days-b.days);},resolve:data=>meters.find(m=>identity(m)===identity(data)),render,renderHome,previous,due,calendar,today,edit,get:id=>meters.find(m=>m.id===id)};
   const oldGo=go;go=function(id){oldGo(id);if(id==='home')renderHome();};
   const oldRenderAll=renderAll;renderAll=function(){oldRenderAll();renderHome();};
-  let renderedDay=today();
-  function refreshReminders(){if(renderedDay!==today()){renderedDay=today();render();}else renderHome();}
+  function refreshReminders(){const box=el('meterPassports');if(box){box.replaceChildren();drawCards(box);}renderHome();}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshReminders();});
   window.addEventListener('focus',refreshReminders);
   

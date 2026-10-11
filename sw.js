@@ -1,4 +1,4 @@
-const CACHE='mydom-nalchik-v50-billing-consistency';
+const CACHE='mydom-nalchik-v51-meter-consistency';
 const CORE=['./','./index.html','./billing.js','./backup-schema.js','./safe-storage.js','./bootstrap.js','./design.css','./home-design.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./qr.js','./welcome.js','./meters.js','./meter-registry.js','./apartments.js','./address-catalog.js','./address-ui.js','./management-data.js','./management.js','./management-ui.js','./issues.js','./issue-guide.js','./cloud.js','./outage-matcher.js','./outage-ui.js','./vendor/jsQR-1.4.0.js','./vendor/zxing-0.21.3.min.js','./vendor/zxing-wasm-3.1.5.js','./vendor/zxing-wasm-3.1.5.wasm'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('mydom-nalchik-')&&k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
