@@ -21,5 +21,5 @@ const welcomeSaveAccount=saveAccount;saveAccount=function(){welcomeSaveAccount()
 if(!localStorage.getItem('mydomWelcomeDone')&&!savedAddress&&!accounts.length&&!manualBills.length)startWelcome();
 
 // Load modules in order so address selection is ready before apartment switching.
-(async()=>{for(const src of ['meters.js','address-catalog.js','management-data.js','management.js','address-ui.js','apartments.js','meter-registry.js','management-ui.js','issues.js','issue-guide.js','cloud.js','outage-matcher.js','outage-ui.js']){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=reject;document.body.append(script);});}})().catch(()=>console.error('Не удалось загрузить дополнительные разделы. Обновите страницу.'));
+(async()=>{for(const src of ['meters.js','address-catalog.js','management-data.js','management.js','address-ui.js','apartments.js','meter-registry.js','management-ui.js','issues.js','issue-guide.js','cloud.js','outage-matcher.js','outage-ui.js','home-design.js']){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=reject;document.body.append(script);});}})().catch(()=>console.error('Не удалось загрузить дополнительные разделы. Обновите страницу.'));
 
