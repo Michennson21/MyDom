@@ -41,6 +41,18 @@ Remaining production work: chosen server/domain and actual deployment, operation
 
 Tests: `node --test server/server.test.mjs`.
 
-## Consistent SQLite backup
+## Encrypted backup and recovery
 
-Run `node server/backup.mjs /backup/mydom-YYYY-MM-DD.sqlite` inside the container with a separately mounted backup directory writable by the node user. This uses SQLite's online backup API. Schedule it daily in the host's scheduler and retain encrypted copies outside the application disk. Restore while the application is stopped: replace the database with a verified backup and remove only the old matching WAL/SHM files before restarting. Never overwrite a running database.
+See [RECOVERY.md](RECOVERY.md) for key creation, container mounts, the optional daily systemd timer and a recovery drill. The previous plaintext backup CLI has been replaced. New commands:
+
+```sh
+node server/backup.mjs keygen /secure/mydom-backup.key
+BACKUP_KEY_FILE=/secure/mydom-backup.key node server/backup.mjs create /data/mydom.sqlite /backup/mydom.enc
+BACKUP_KEY_FILE=/secure/mydom-backup.key node server/backup.mjs restore /backup/mydom.enc /recovery/new.sqlite
+```
+
+Backups use the SQLite online API, validate physical integrity and application documents, and encrypt with AES-256-GCM. Existing destination files are never overwritten. Recovery requires a new database path without matching WAL/SHM files, validates the decrypted database and revokes all restored sessions. The original database stays untouched. The key must be a private file (mode 600), stored separately from copies; without it recovery is impossible. Temporary plaintext files use a private directory and are removed on normal completion/failure; protect the host and temporary filesystem too. The pilot tool processes snapshots in memory, with a 256 MiB limit.
+
+The daily job verifies each snapshot before publication; scheduling and independent off-host copying are not enabled until deployment. It never deletes older copies automatically. Monitor disk space, job failures and age of last off-host copy. Test restoring regularly on a separate volume. SQLite volume and external backups remain required even with restart policies.
+
+Tests: `node --test server/*.test.mjs`.

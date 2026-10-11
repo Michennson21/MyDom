@@ -1,0 +1,9 @@
+[Unit]
+Description=Verified encrypted MyDom database backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker exec mydom node server/backup-job.mjs
+TimeoutStartSec=15min

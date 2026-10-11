@@ -2,4 +2,8 @@
 server/data
 *.sqlite*
 .env
+.env.*
+*.key
+*.enc
+backups
 node_modules
