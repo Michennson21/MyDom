@@ -3,7 +3,7 @@
  const keys=['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory','mydomMetersV1','mydomApartmentsV1','mydomWelcomeDone','mydomHouseEvents'];
  const workspaceKeys=['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory','mydomMetersV1'];
  let login=null,revision=null,remote=null,busy=false;
- const box=document.createElement('div');box.className='card';box.id='cloudAccount';document.getElementById('homeinfo').prepend(box);
+ const box=document.createElement('div');box.className='card';box.id='cloudAccount';const apartmentSettings=document.getElementById('apartmentSettings');if(apartmentSettings)apartmentSettings.after(box);else document.getElementById('homeinfo').prepend(box);
  function status(message){document.getElementById('cloudStatus').textContent=message;}
  async function request(path,options={}){const response=await fetch('/api/'+path,{credentials:'same-origin',cache:'no-store',...options,headers:{'Content-Type':'application/json',...options.headers}});let data;try{data=await response.json();}catch(e){throw Error('Сервер недоступен. Локальные данные сохранены.');}if(!response.ok)throw Error(data.error||'Ошибка сервера');return data;}
  function snapshot(){const data=Object.fromEntries(keys.map(k=>[k,localStorage.getItem(k)]));if(data.mydomApartmentsV1){const registry=JSON.parse(data.mydomApartmentsV1),current=registry.homes.find(h=>h.id===registry.active);if(current){current.data=Object.fromEntries(workspaceKeys.map(k=>[k,data[k]]));current.address=JSON.parse(data.mydomAddress||'null');}data.mydomApartmentsV1=JSON.stringify(registry);}return data;}
