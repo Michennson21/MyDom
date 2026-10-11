@@ -1,0 +1,6 @@
+*.sqlite*
+*.key
+*.enc
+.env
+.env.*
+backups/

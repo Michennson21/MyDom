@@ -3,7 +3,7 @@ const BackupSchema=createRequire(import.meta.url)('../backup-schema.js');
 import http from 'node:http';
 import {DatabaseSync} from 'node:sqlite';
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
-import {readFileSync,mkdirSync} from 'node:fs';
+import {readFileSync,mkdirSync,openSync,closeSync,chmodSync,existsSync} from 'node:fs';
 import {dirname,resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -14,7 +14,7 @@ const fail=(status,message)=>{throw Object.assign(new Error(message),{status});}
 export function createApp({database=process.env.DATABASE_PATH||'/data/mydom.sqlite',origin=process.env.APP_ORIGIN||'http://localhost:8080',invite=process.env.REGISTRATION_CODE||'',allowLocalRegistration=false,outagesPath=process.env.OUTAGES_PATH||''}={}){
  const url=new URL(origin);if(url.origin!==origin)throw Error('APP_ORIGIN must be an origin without a path');
  const local=['localhost','127.0.0.1'].includes(url.hostname);if(!local&&url.protocol!=='https:')throw Error('Production requires HTTPS APP_ORIGIN');
- if(database!==':memory:')mkdirSync(dirname(database),{recursive:true});
+ if(database!==':memory:'){mkdirSync(dirname(database),{recursive:true,mode:0o700});const fd=openSync(database,'a',0o600);closeSync(fd);chmodSync(database,0o600);for(const suffix of ['-wal','-shm'])if(existsSync(database+suffix))chmodSync(database+suffix,0o600);}
  const db=new DatabaseSync(database);db.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;');
  db.exec(`CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,login TEXT UNIQUE NOT NULL,salt TEXT NOT NULL,password TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),expires INTEGER NOT NULL);
@@ -30,7 +30,7 @@ export function createApp({database=process.env.DATABASE_PATH||'/data/mydom.sqli
    const path=new URL(req.url,origin).pathname;
    if(path.startsWith('/api/')){
     if(req.method!=='GET'&&req.headers.origin!==origin)fail(403,'Недопустимый источник запроса.');
-    if(path==='/api/health'&&req.method==='GET')return send(200,{service:'mydom',storage:'sqlite'});
+    if(path==='/api/health'&&req.method==='GET'){db.prepare('SELECT user_id FROM documents LIMIT 1').get();return send(200,{service:'mydom',storage:'sqlite'});}
     if(['/api/register','/api/login'].includes(path)&&req.method==='POST'){
      limit(req.socket.remoteAddress);const b=await body(req);const login=String(b.login||'').trim().toLowerCase(),password=String(b.password||'');
      if(!/^[a-z0-9_.@+-]{3,100}$/.test(login)||password.length<12||password.length>200)fail(400,'Логин: 3–100 латинских символов. Пароль: 12–200 символов.');
@@ -74,4 +74,4 @@ export function createApp({database=process.env.DATABASE_PATH||'/data/mydom.sqli
  });
  server.on('close',()=>db.close());return server;
 }
-if(process.argv[1]===fileURLToPath(import.meta.url)){const server=createApp();server.listen(Number(process.env.PORT||8080),'0.0.0.0',()=>console.log('MyDom server listening'));}
+if(process.argv[1]===fileURLToPath(import.meta.url)){const server=createApp();server.listen(Number(process.env.PORT||8080),'0.0.0.0',()=>console.log('MyDom server listening'));let stopping=false;for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>{if(stopping)return;stopping=true;server.close(()=>process.exit(0));setTimeout(()=>process.exit(1),10000).unref();});}

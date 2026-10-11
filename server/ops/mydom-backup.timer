@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily MyDom backup
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=5min
+Persistent=true
+Unit=mydom-backup.service
+
+[Install]
+WantedBy=timers.target
