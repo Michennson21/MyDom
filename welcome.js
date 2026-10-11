@@ -20,6 +20,18 @@ const welcomeSaveAddress=saveAddress;saveAddress=function(){welcomeSaveAddress()
 const welcomeSaveAccount=saveAccount;saveAccount=function(){welcomeSaveAccount();if(welcome.classList.contains('show')&&!document.getElementById('accountModal').classList.contains('show'))renderWelcome();};
 if(!localStorage.getItem('mydomWelcomeDone')&&!savedAddress&&!accounts.length&&!manualBills.length)startWelcome();
 
-// Load modules in order so address selection is ready before apartment switching.
-(async()=>{for(const src of ['meters.js','address-catalog.js','management-data.js','management.js','address-ui.js','apartments.js','meter-registry.js','management-ui.js','issues.js','issue-guide.js','cloud.js','outage-matcher.js','outage-ui.js','home-design.js']){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=reject;document.body.append(script);});}})().catch(()=>console.error('Не удалось загрузить дополнительные разделы. Обновите страницу.'));
-
+// Keep unrelated modules available if one download fails; never fall back to editing
+// an existing address while apartment storage is unavailable.
+(async()=>{
+ for(const src of ['meters.js','address-catalog.js','management-data.js','management.js','address-ui.js','apartments.js','meter-registry.js','management-ui.js','issues.js','issue-guide.js','cloud.js','outage-matcher.js','outage-ui.js','home-design.js']){
+  if(src==='apartments.js'&&typeof window.addressSelection!=='function')continue;
+  try{await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=reject;document.body.append(script);});}
+  catch(error){console.error('Не удалось загрузить '+src);}
+ }
+ if(!window.HomeDesign)renderDashboard();
+ if(!window.ApartmentWorkspace?.ready){
+  document.getElementById('apartmentLoadStatus').textContent='Не удалось открыть список квартир. Данные не изменены. Обновите страницу, чтобы повторить загрузку.';
+  document.getElementById('activeApartment').replaceChildren(new Option('Список квартир недоступен',''));
+  const retry=document.createElement('button');retry.className='btn secondary block';retry.textContent='Повторить загрузку';retry.onclick=()=>location.reload();document.getElementById('apartmentSettings').append(retry);
+ }
+})().catch(error=>console.error('Ошибка загрузки приложения',error));

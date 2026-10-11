@@ -21,11 +21,9 @@
  if(el('houseEventsBlock'))outages.append(el('houseEventsBlock'));
  // Existing address selector keeps its native accessibility and apartment switch behavior.
  home.querySelector('.address').after(el('homeStatus'));el('homeStatus').after(attention);attention.after(services);services.after(outages);
- const info=add(el('homeinfo'),'div','','card');info.id='appInformation';add(info,'div','О приложении','title');const version=home.querySelector('.version-label');if(version){version.textContent='Тестовая версия · 0.31';info.append(version);}document.title='Мой дом — Нальчик v0.31';add(info,'p','Данные сохраняются в этом браузере. Серверная копия доступна только после подключения сервера. Сохранённые показания и обращения не отправляются поставщикам автоматически.','muted');
+ const info=add(el('homeinfo'),'div','','card');info.id='appInformation';add(info,'div','О приложении','title');const version=home.querySelector('.version-label');if(version){version.textContent='Тестовая версия · 0.32';info.append(version);}document.title='Мой дом — Нальчик v0.32';add(info,'p','Данные сохраняются в этом браузере. Серверная копия доступна только после подключения сервера. Сохранённые показания и обращения не отправляются поставщикам автоматически.','muted');
  function moveNotifications(){if(el('notificationPanel'))el('homeinfo').append(el('notificationPanel'));}
  const originalEnsure=ensureNotificationPanel;ensureNotificationPanel=function(){originalEnsure();moveNotifications();};moveNotifications();
- let entry;
- function addReceipt(){if(!entry){entry=add(document.body,'div','','modal center');entry.id='homeReceiptModal';entry.setAttribute('role','dialog');entry.setAttribute('aria-modal','true');entry.setAttribute('aria-labelledby','homeReceiptTitle');const sheet=add(entry,'div','','sheet');add(sheet,'h3','Добавить квитанцию').id='homeReceiptTitle';add(sheet,'p','Выберите удобный способ ввода.','muted');button(sheet,'Считать QR-код',()=>{entry.classList.remove('show');openQR();},'btn block');button(sheet,'Ввести вручную',()=>{entry.classList.remove('show');openBill();},'btn secondary block');button(sheet,'Отмена',()=>entry.classList.remove('show'),'btn secondary block');entry.addEventListener('keydown',e=>{if(e.key==='Escape')entry.classList.remove('show');});}entry.classList.add('show');entry.querySelector('button').focus();}
  function renderSummary(){
   const box=el('homeStatus');box.replaceChildren();const bills=savedAddress?latest():[];
   add(box,'div',bills.length?'Остаток по квитанциям':'Ваши начисления','home-summary-label');
@@ -33,7 +31,7 @@
   add(box,'p',bills.length?'По вашим записям · с учётом отмеченной оплаты':'Добавьте квитанцию, чтобы увидеть сумму.','muted');
   if(!savedAddress)add(box,'p','Сначала добавьте адрес в разделе «Ещё».','muted');
   const actions=add(box,'div','','home-primary-actions');
-  const receipt=button(actions,'',savedAddress?addReceipt:()=>go('homeinfo'),'btn');receipt.id='homeAddReceipt';receipt.append(icon('bill'));add(receipt,'span','Добавить квитанцию');
+  const receipt=button(actions,'',savedAddress?openReceiptEntry:()=>go('homeinfo'),'btn');receipt.id='homeAddReceipt';receipt.append(icon('bill'));add(receipt,'span','Добавить квитанцию');
   const reading=button(actions,'',()=>go('meters'),'btn secondary');reading.id='homeAddReading';reading.append(icon('meter'));add(reading,'span','Внести показания');
   if(bills.length){const details=add(box,'details','','home-calculation');add(details,'summary','Как рассчитана сумма');add(details,'p','Последняя добавленная квитанция каждого лицевого счёта за вычетом отмеченной вами оплаты. Периоды могут отличаться. Это не подтверждённая поставщиками задолженность.','muted');}
   if(savedAddress){el('addressTitle').textContent=savedAddress.street+', '+window.cleanHouseNumber(savedAddress.house);el('apartmentTitle').textContent=savedAddress.isPrivate?'Частный дом':'Квартира '+savedAddress.apartment;}

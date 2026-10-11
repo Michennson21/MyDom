@@ -10,14 +10,9 @@
  try{registry=JSON.parse(localStorage.getItem(registryKey)||'null');if(registry&&(!Array.isArray(registry.homes)||!registry.homes.some(h=>h.id===registry.active)))throw Error('invalid registry');}
  catch(e){alert('Не удалось открыть список квартир. Существующие данные не изменены.');return;}
  if(!registry){registry={active:null,homes:[]};if(savedAddress){const id=crypto.randomUUID();registry={active:id,homes:[{id,address:savedAddress,data:snapshot()}]};try{localStorage.setItem(registryKey,JSON.stringify(registry));}catch(e){alert('Не удалось сохранить список квартир. Данные не изменены.');return;}}}
- const addressCard=document.querySelector('#home .address');
- const panel=document.createElement('div');panel.id='apartmentSwitcher';
- addressCard.classList.add('with-apartment-switcher');
- addressCard.querySelector('button').hidden=true;
- addressCard.append(panel);
- const settings=document.createElement('div');settings.id='apartmentSettings';settings.className='card';
- document.getElementById('homeinfo').prepend(settings);
- function render(){panel.innerHTML='<div><select id="activeApartment" class="input" aria-label="Выбрать квартиру"'+(registry.homes.length?'':' disabled')+'>'+(registry.homes.length?registry.homes.map(h=>'<option value="'+h.id+'"'+(h.id===registry.active?' selected':'')+'>'+escapeHtml(h.address.street+', '+window.cleanHouseNumber(h.address.house)+(h.address.isPrivate?' · частный дом':', кв. '+h.address.apartment))+'</option>').join(''):'<option>Квартира не добавлена</option>')+'</select></div><div class="apartment-note">'+(registry.homes.length?'Счета, начисления и показания относятся к выбранной квартире.':'Добавьте первую квартиру в разделе «Ещё».')+'</div>';
+ const panel=document.getElementById('apartmentSwitcher');
+ const settings=document.getElementById('apartmentSettings');
+ function render(){panel.innerHTML='<div><select id="activeApartment" class="input" aria-label="Выбрать квартиру"'+(registry.homes.length?'':' disabled')+'>'+(registry.homes.length?registry.homes.map(h=>'<option value="'+h.id+'"'+(h.id===registry.active?' selected':'')+'>'+escapeHtml(h.address.street+', '+window.cleanHouseNumber(h.address.house)+(h.address.isPrivate?' · частный дом':', кв. '+h.address.apartment))+'</option>').join(''):'<option>Квартира не добавлена</option>')+'</select></div><div class="apartment-note">'+(registry.homes.length?'Добавление квартиры — в разделе «Ещё». Счета и показания относятся к выбранной квартире.':'Добавьте первую квартиру в разделе «Ещё».')+'</div>';
  settings.innerHTML='<div class="title">Квартиры</div><p class="muted">'+(registry.homes.length?'Сохранено адресов: '+registry.homes.length+'. Переключаться между ними можно на главной.':'Добавьте первую квартиру или частный дом, чтобы сохранять счета и показания по адресу.')+'</p><button id="addApartment" class="btn secondary block">+ Добавить квартиру</button>';
  document.getElementById('addApartment').onclick=()=>{openAddress();document.querySelector('#addressModal h3').textContent='Добавить квартиру';};
  document.getElementById('activeApartment').onchange=e=>switchTo(e.target.value);
@@ -44,5 +39,6 @@
  // Another tab changing apartments must not keep writing with stale account state.
  window.addEventListener('storage',e=>{if(e.key===registryKey)location.reload();});
  render();
+ window.ApartmentWorkspace={ready:true};
 })();
 
