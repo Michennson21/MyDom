@@ -28,6 +28,7 @@
  try{await SafeStore.commit({[key]:JSON.stringify(next)});}catch(e){feedback('Не удалось сохранить в браузере. Запись не добавлена.');return;}
  records=next;document.getElementById('meterValue').value='';feedback('Показание сохранено в приложении. Поставщику не отправлено.');renderHistory();window.MeterRegistry?.render();
  }
+ window.MeterReadings={reload:()=>{records=JSON.parse(localStorage.getItem(key)||'[]');render();}};
  const previousGo=go;go=function(id){if(id==='meters')render();previousGo(id);};
  const previousRenderAll=renderAll;renderAll=function(){previousRenderAll();if(section.classList.contains('active'))render();};
  const previousSaveAccount=saveAccount;saveAccount=async function(){await previousSaveAccount();render();};

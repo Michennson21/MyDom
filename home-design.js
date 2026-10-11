@@ -9,7 +9,7 @@
  const money=n=>currency.format(n/100);
  const cents=n=>Number.isFinite(Number(n))?Math.round(Number(n)*100):0;
  const remaining=b=>Math.max(0,cents(b.total)-cents(b.paid));
- function latest(){const map=new Map();for(const b of manualBills){const key=JSON.stringify([b.provider,b.account]);if(!map.has(key))map.set(key,b);}return [...map.values()];}
+ function latest(){return Billing.summary(manualBills).latest;}
  function service(provider){if(/водоканал|холодн.*вод/i.test(provider))return['Холодная вода','water'];if(/тепло|нтс|горяч.*вод/i.test(provider))return['Тепло и горячая вода','heat'];if(/газ/i.test(provider))return['Газ','gas'];if(/электро|энергосбыт|россети|егп/i.test(provider))return['Электроэнергия','power'];if(/экотехпром|отход|мусор/i.test(provider))return['Вывоз мусора','waste'];return[provider||'Услуга','home'];}
  const brand=document.querySelector('.brand');brand.replaceChildren(icon('home'));add(brand,'span','Мой дом');document.querySelector('.top .sub').textContent='Нальчик';
  document.querySelector('meta[name="theme-color"]').content='#174e45';
@@ -21,27 +21,29 @@
  if(el('houseEventsBlock'))outages.append(el('houseEventsBlock'));
  // Existing address selector keeps its native accessibility and apartment switch behavior.
  home.querySelector('.address').after(el('homeStatus'));el('homeStatus').after(attention);attention.after(services);services.after(outages);
- const info=add(el('homeinfo'),'div','','card');info.id='appInformation';add(info,'div','О приложении','title');const version=home.querySelector('.version-label');if(version){version.textContent='Тестовая версия · 0.33';info.append(version);}document.title='Мой дом — Нальчик v0.33';add(info,'p','Данные сохраняются в этом браузере. Серверная копия доступна только после подключения сервера. Сохранённые показания и обращения не отправляются поставщикам автоматически.','muted');
+ const info=add(el('homeinfo'),'div','','card');info.id='appInformation';add(info,'div','О приложении','title');const version=home.querySelector('.version-label');if(version){version.textContent='Тестовая версия · 0.34';info.append(version);}document.title='Мой дом — Нальчик v0.34';add(info,'p','Данные сохраняются в этом браузере. Серверная копия доступна только после подключения сервера. Сохранённые показания и обращения не отправляются поставщикам автоматически.','muted');
  function moveNotifications(){if(el('notificationPanel'))el('homeinfo').append(el('notificationPanel'));}
  const originalEnsure=ensureNotificationPanel;ensureNotificationPanel=function(){originalEnsure();moveNotifications();};moveNotifications();
  function renderSummary(){
-  const box=el('homeStatus');box.replaceChildren();const bills=savedAddress?latest():[];
+  const box=el('homeStatus');box.replaceChildren();const result=Billing.summary(savedAddress?manualBills:[]),bills=result.latest;
   add(box,'div',bills.length?'Остаток по квитанциям':'Ваши начисления','home-summary-label');
-  add(box,'div',bills.length?money(bills.reduce((s,b)=>s+remaining(b),0)):'—','home-total');
-  add(box,'p',bills.length?'По вашим записям · с учётом отмеченной оплаты':'Добавьте квитанцию, чтобы увидеть сумму.','muted');
+  add(box,'div',bills.length&&!result.issues.length?money(result.total):'—','home-total');
+  add(box,'p',result.issues.length?'Есть записи, требующие проверки':bills.length?'По вашим записям · с учётом отмеченной оплаты':'Добавьте квитанцию, чтобы увидеть сумму.','muted');
+  if(result.issues.length){add(box,'p','Не удалось определить итог по всем счетам: уточните периоды, суммы или повторные квитанции.','notice');button(box,'Проверить начисления',()=>go('bills'),'btn secondary block');}
   if(!savedAddress)add(box,'p','Сначала добавьте адрес в разделе «Ещё».','muted');
   const actions=add(box,'div','','home-primary-actions');
   const receipt=button(actions,'',savedAddress?openReceiptEntry:()=>go('homeinfo'),'btn');receipt.id='homeAddReceipt';receipt.append(icon('bill'));add(receipt,'span','Добавить квитанцию');
   const reading=button(actions,'',()=>go('meters'),'btn secondary');reading.id='homeAddReading';reading.append(icon('meter'));add(reading,'span','Внести показания');
-  if(bills.length){const details=add(box,'details','','home-calculation');add(details,'summary','Как рассчитана сумма');add(details,'p','Последняя добавленная квитанция каждого лицевого счёта за вычетом отмеченной вами оплаты. Периоды могут отличаться. Это не подтверждённая поставщиками задолженность.','muted');}
+  if(bills.length){const details=add(box,'details','','home-calculation');add(details,'summary','Как рассчитана сумма');add(details,'p','Квитанция за самый поздний расчётный месяц каждого лицевого счёта за вычетом отмеченной вами оплаты. Периоды могут отличаться. Это не подтверждённая поставщиками задолженность.','muted');}
   if(savedAddress){el('addressTitle').textContent=savedAddress.street+', '+window.cleanHouseNumber(savedAddress.house);el('apartmentTitle').textContent=savedAddress.isPrivate?'Частный дом':'Квартира '+savedAddress.apartment;}
   else {el('addressTitle').textContent='Выберите ваш дом';el('apartmentTitle').textContent='Добавление адреса — в «Ещё»';}
-  renderServices(bills);
+  renderServices(bills,result.issues);
  }
- function renderServices(bills){services.replaceChildren();const head=add(services,'div','','home-section-head');add(head,'h2','Услуги');button(head,'Все начисления',()=>go('bills'),'home-text-button');const card=add(services,'div','','card');
+ function renderServices(bills,issues=[]){services.replaceChildren();const head=add(services,'div','','home-section-head');add(head,'h2','Услуги');button(head,'Все начисления',()=>go('bills'),'home-text-button');const card=add(services,'div','','card');
   const rows=new Map();for(const a of (savedAddress?accounts:[]))rows.set(JSON.stringify([a.provider,a.number]),{provider:a.provider,account:a.number});for(const b of bills)rows.set(JSON.stringify([b.provider,b.account]),b);
+  for(const x of issues)rows.set(JSON.stringify([x.provider,x.account]),x);
   if(!rows.size){add(card,'p','Здесь появятся услуги по вашим лицевым счетам.','muted');button(card,'Добавить лицевой счёт',savedAddress?()=>openAccount():()=>go('homeinfo'),'btn secondary block');return;}
-  for(const b of rows.values()){const [name,type]=service(b.provider),row=add(card,'div','','home-service-row');const symbol=add(row,'span','','home-service-icon');symbol.append(icon(type));const text=add(row,'div','','home-service-copy');add(text,'strong',name);add(text,'small','Л/с '+b.account+(b.period?' · '+b.period:''));if(name!==b.provider)add(text,'small',b.provider);add(row,'span',Object.hasOwn(b,'total')?money(remaining(b)):'Нет квитанции','home-service-amount');}
+  for(const b of rows.values()){const [name,type]=service(b.provider),row=add(card,'div','','home-service-row');const symbol=add(row,'span','','home-service-icon');symbol.append(icon(type));const text=add(row,'div','','home-service-copy');add(text,'strong',name);add(text,'small','Л/с '+b.account+(b.period?' · '+Billing.label(b.period):''));if(name!==b.provider)add(text,'small',b.provider);add(row,'span',b.reason?'Проверьте квитанции':Object.hasOwn(b,'total')?money(remaining(b)):'Нет квитанции','home-service-amount');}
  }
  function attentionRow(title,detail,fn,type='bill',warning=false){const b=button(attention,'',fn,'home-attention-row'+(warning?' is-warning':''));const symbol=add(b,'span','','home-attention-icon');symbol.append(icon(type));const copy=add(b,'span','','home-attention-copy');add(copy,'strong',title);add(copy,'small',detail);b.append(icon('chevron'));}
  function renderAttention(){attention.replaceChildren();add(attention,'h2','Требует внимания');let count=0;
