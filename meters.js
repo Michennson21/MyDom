@@ -12,10 +12,10 @@
  }
  function feedback(message){const box=document.getElementById('meterFeedback');box.className='notice';box.textContent=message;box.focus();}
  function renderHistory(){const history=records.filter(r=>r.addressKey===addressKey());const box=document.getElementById('meterHistory');box.innerHTML=history.length?history.map(r=>'<div class="card"><div class="row"><div class="grow"><div class="title">'+escapeHtml(r.kind)+'</div><div class="muted">'+escapeHtml(r.provider)+' · Л/с '+escapeHtml(r.account)+'</div><div class="muted">Счётчик '+escapeHtml(r.meter)+'</div></div><b class="service-total">'+Number(r.value).toLocaleString('ru-RU',{maximumFractionDigits:3})+' м³</b></div><p class="muted">'+new Date(r.createdAt).toLocaleString('ru-RU')+'</p><span class="pill userdata">Не отправлено поставщику</span><button class="linkbtn danger" style="margin-left:10px" data-remove-reading="'+escapeHtml(r.id)+'">Удалить</button></div>').join(''):'<div class="card empty">Для этой квартиры пока нет показаний.</div>';
- box.querySelectorAll('[data-remove-reading]').forEach(b=>b.addEventListener('click',()=>{if(!confirm('Удалить эту запись показания?'))return;const next=records.filter(r=>r.id!==b.dataset.removeReading);try{localStorage.setItem(key,JSON.stringify(next));records=next;renderHistory();window.MeterRegistry?.render();}catch(e){alert('Не удалось удалить запись. Данные не изменены.');}}));
+ box.querySelectorAll('[data-remove-reading]').forEach(b=>b.addEventListener('click',async()=>{if(!confirm('Удалить эту запись показания?'))return;const next=records.filter(r=>r.id!==b.dataset.removeReading);try{await SafeStore.commit({[key]:JSON.stringify(next)});records=next;renderHistory();window.MeterRegistry?.render();}catch(e){alert('Не удалось удалить запись. Данные не изменены.');}}));
  const legacy=localStorage.getItem('mydomWater');if(legacy!==null){const note=document.createElement('div');note.className='card';note.textContent='Ранее сохранённое значение: '+legacy+' м³. У него нет привязки к счётчику, адресу и дате. При необходимости внесите новую запись.';box.append(note);}
  }
- function save(){
+ async function save(){
  const account=waterAccounts()[Number(document.getElementById('meterAccount').value)],meter=document.getElementById('meterNumber').value.trim(),kind=document.getElementById('meterKind').value,raw=document.getElementById('meterValue').value.trim().replace(',','.');
  if(!account||!savedAddress){feedback('Выберите адрес и лицевой счёт.');return;}
  if(!meter){feedback('Укажите номер счётчика, чтобы вести отдельную историю.');return;}
@@ -25,11 +25,11 @@
  if(previous&&value<previous.value){feedback('Значение меньше предыдущего ('+previous.value+' м³). Проверьте ввод. Для нового счётчика укажите его номер; ошибочную запись можно удалить из истории.');return;}
  if(previous&&value===previous.value&&!confirm('Значение совпадает с предыдущим. Сохранить повторное показание?'))return;
  const record={id:crypto.randomUUID(),addressKey:addressKey(),provider:account.provider,account:account.number,meter,meterId,kind,value,createdAt:new Date().toISOString(),status:'local'};const next=[record,...records];
- try{localStorage.setItem(key,JSON.stringify(next));}catch(e){feedback('Не удалось сохранить в браузере. Запись не добавлена.');return;}
+ try{await SafeStore.commit({[key]:JSON.stringify(next)});}catch(e){feedback('Не удалось сохранить в браузере. Запись не добавлена.');return;}
  records=next;document.getElementById('meterValue').value='';feedback('Показание сохранено в приложении. Поставщику не отправлено.');renderHistory();window.MeterRegistry?.render();
  }
  const previousGo=go;go=function(id){if(id==='meters')render();previousGo(id);};
  const previousRenderAll=renderAll;renderAll=function(){previousRenderAll();if(section.classList.contains('active'))render();};
- const previousSaveAccount=saveAccount;saveAccount=function(){previousSaveAccount();render();};
+ const previousSaveAccount=saveAccount;saveAccount=async function(){await previousSaveAccount();render();};
  render();
 })();

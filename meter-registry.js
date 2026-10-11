@@ -32,7 +32,7 @@
   }
   const previous = id => { const m=meters.find(m=>m.id===id); return m ? history().find(r=>matches(r,m)) : undefined; };
   function events(m) { return m.status === 'archived' ? [] : [m.nextVerification ? {type:'verification',title:'Поверка',date:m.nextVerification} : null, m.actionDate && m.actionTitle ? {type:'action',title:m.actionTitle,date:m.actionDate} : null].filter(Boolean); }
-  function commit(next) { try { localStorage.setItem(KEY, JSON.stringify(next)); } catch (_) { alert('Не удалось сохранить счётчик. Данные на экране не потеряны; освободите место и повторите.'); return false; } meters=next; return true; }
+  async function commit(next) { try { await SafeStore.commit({[KEY]:JSON.stringify(next)}); } catch (_) { alert('Не удалось сохранить счётчик. Данные на экране не потеряны; освободите место и повторите.'); return false; } meters=next; return true; }
   let modal;
   function close() { modal.classList.remove('show'); }
   function edit(existing = {}) {
@@ -66,7 +66,7 @@
     const error=add(f,'p','','notice');error.id='passportError';error.hidden=true;error.setAttribute('role','alert');
     const save=add(f,'button','Сохранить счётчик','btn block');save.type='submit';
     button(sheet,'Отмена',close);
-    f.onsubmit=e=>{
+    f.onsubmit=async e=>{
       e.preventDefault(); const value=n=>el('passport-'+n).value.trim(); const data={...existing,id:existing.id||crypto.randomUUID()};
       ['kind','serial','model','location','provider','account','installed','commissioned','verification','nextVerification','seal','status','actionTitle','actionDate','notes'].forEach(n=>data[n]=value(n));
       const fail=message=>{error.hidden=false;error.textContent=message;error.scrollIntoView({block:'nearest'});};
@@ -79,7 +79,7 @@
       if(Boolean(data.actionTitle)!==Boolean(data.actionDate))return fail('Для другого действия укажите и название, и дату.');
       data.readingIdentity=existing.readingIdentity||{kind:data.kind,provider:data.provider,account:data.account,serial:data.serial};
       data.updatedAt=new Date().toISOString();data.createdAt=existing.createdAt||data.updatedAt;
-      if(commit([data,...meters.filter(m=>m.id!==data.id)])){close();render();}
+      if(await commit([data,...meters.filter(m=>m.id!==data.id)])){close();render();}
     };
     modal.classList.add('show');sheet.scrollTop=0;el('passport-serial').focus();
   }
@@ -154,7 +154,7 @@
   function refreshReminders(){if(renderedDay!==today()){renderedDay=today();render();}else renderHome();}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshReminders();});
   window.addEventListener('focus',refreshReminders);
-  window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});
+  
   setInterval(refreshReminders,60000);
   render();
 })();

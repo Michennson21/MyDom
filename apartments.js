@@ -1,15 +1,15 @@
 /* Compatibility layer: each apartment keeps its own local workspace.
    The active workspace keys remain the source of truth until a switch. */
-(function(){
+window.ApartmentInitialization=(async function(){
  const registryKey='mydomApartmentsV1';
  const workspaceKeys=['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory','mydomMetersV1'];
  const snapshot=()=>Object.fromEntries(workspaceKeys.map(k=>[k,localStorage.getItem(k)]));
- const apply=data=>{for(const k of workspaceKeys){if(data[k]==null)localStorage.removeItem(k);else localStorage.setItem(k,data[k]);}};
+ 
  const identity=a=>JSON.stringify([a.street,window.cleanHouseNumber(a.house),a.apartment].map(v=>String(v||'').toLowerCase().replace(/\s+/g,' ').trim()));
  let registry;
  try{registry=JSON.parse(localStorage.getItem(registryKey)||'null');if(registry&&(!Array.isArray(registry.homes)||!registry.homes.some(h=>h.id===registry.active)))throw Error('invalid registry');}
  catch(e){alert('Не удалось открыть список квартир. Существующие данные не изменены.');return;}
- if(!registry){registry={active:null,homes:[]};if(savedAddress){const id=crypto.randomUUID();registry={active:id,homes:[{id,address:savedAddress,data:snapshot()}]};try{localStorage.setItem(registryKey,JSON.stringify(registry));}catch(e){alert('Не удалось сохранить список квартир. Данные не изменены.');return;}}}
+ if(!registry){registry={active:null,homes:[]};if(savedAddress){const id=crypto.randomUUID();registry={active:id,homes:[{id,address:savedAddress,data:snapshot()}]};try{await SafeStore.commit({[registryKey]:JSON.stringify(registry)});}catch(e){alert('Не удалось сохранить список квартир. Данные не изменены.');return;}}}
  const panel=document.getElementById('apartmentSwitcher');
  const settings=document.getElementById('apartmentSettings');
  function render(){panel.innerHTML='<div><select id="activeApartment" class="input" aria-label="Выбрать квартиру"'+(registry.homes.length?'':' disabled')+'>'+(registry.homes.length?registry.homes.map(h=>'<option value="'+h.id+'"'+(h.id===registry.active?' selected':'')+'>'+escapeHtml(h.address.street+', '+window.cleanHouseNumber(h.address.house)+(h.address.isPrivate?' · частный дом':', кв. '+h.address.apartment))+'</option>').join(''):'<option>Квартира не добавлена</option>')+'</select></div><div class="apartment-note">'+(registry.homes.length?'Добавление квартиры — в разделе «Ещё». Счета и показания относятся к выбранной квартире.':'Добавьте первую квартиру в разделе «Ещё».')+'</div>';
@@ -17,27 +17,25 @@
  document.getElementById('addApartment').onclick=()=>{openAddress();document.querySelector('#addressModal h3').textContent='Добавить квартиру';};
  document.getElementById('activeApartment').onchange=e=>switchTo(e.target.value);
  }
- function commit(next,data){
-  const before=snapshot(),oldRegistry=localStorage.getItem(registryKey);
-  try{apply(data);localStorage.setItem(registryKey,JSON.stringify(next));}
-  catch(error){try{apply(before);if(oldRegistry===null)localStorage.removeItem(registryKey);else localStorage.setItem(registryKey,oldRegistry);}catch(rollbackError){alert('Хранилище браузера недоступно. Не продолжайте ввод до перезагрузки страницы.');return false;}alert('Не удалось переключить квартиру. Данные оставлены без изменений.');render();return false;}
+ async function commit(next,data){
+  try{await SafeStore.commit({...data,[registryKey]:JSON.stringify(next)});}catch(error){alert(error.message);render();return false;}
   registry=next;return true;
  }
  function withCurrent(){const next=JSON.parse(JSON.stringify(registry));const current=next.homes.find(h=>h.id===next.active);if(current){current.data=snapshot();current.address=savedAddress;}return next;}
- function switchTo(id){if(id===registry.active)return;const next=withCurrent(),target=next.homes.find(h=>h.id===id);if(!target)return;next.active=id;if(commit(next,target.data)){location.reload();}}
+ async function switchTo(id){if(id===registry.active)return;const next=withCurrent(),target=next.homes.find(h=>h.id===id);if(!target)return;next.active=id;if(await commit(next,target.data)){location.reload();}}
  // A changed address creates/selects another apartment; it never relabels existing bills.
- saveAddress=function(){
+ saveAddress=async function(){
   const address=window.addressSelection();if(!address)return;
   const next=withCurrent();let target=next.homes.find(h=>identity(h.address)===identity(address));
   if(!target){const data=next.homes.length?Object.fromEntries(workspaceKeys.map(k=>[k,null])):snapshot();data.mydomAddress=JSON.stringify(address);target={id:crypto.randomUUID(),address,data};next.homes.push(target);}
   target.address=address;target.data.mydomAddress=JSON.stringify(address);
   next.active=target.id;
-  if(!commit(next,target.data))return;
+  if(!await commit(next,target.data))return;
   if(!savedAddress){savedAddress=address;renderAll();closeAddress();render();if(typeof welcome!=='undefined'&&welcome.classList.contains('show'))renderWelcome();}
   else location.reload();
  };
  // Another tab changing apartments must not keep writing with stale account state.
- window.addEventListener('storage',e=>{if(e.key===registryKey)location.reload();});
+ // SafeStore blocks stale writes without discarding unfinished forms.
  render();
  window.ApartmentWorkspace={ready:true};
 })();

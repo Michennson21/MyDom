@@ -1,3 +1,5 @@
+import {createRequire} from 'node:module';
+const BackupSchema=createRequire(import.meta.url)('../backup-schema.js');
 import http from 'node:http';
 import {DatabaseSync} from 'node:sqlite';
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
@@ -53,7 +55,7 @@ export function createApp({database=process.env.DATABASE_PATH||'/data/mydom.sqli
     if(path==='/api/data'&&req.method==='GET'){const d=db.prepare('SELECT * FROM documents WHERE user_id=?').get(account.id);return send(200,{revision:d.revision,data:d.data?JSON.parse(d.data):null,updated:d.updated});}
     if(path==='/api/data'&&req.method==='PUT'){
      const b=await body(req);if(!Number.isSafeInteger(b.revision)||b.revision<0||!b.data||Array.isArray(b.data)||typeof b.data!=='object')fail(400,'Неверный формат данных');
-     for(const [k,v]of Object.entries(b.data)){if(!keys.has(k)||(v!==null&&typeof v!=='string'))fail(400,'Недопустимое поле');if(v!==null&&!['mydomWater','mydomWelcomeDone'].includes(k)){try{JSON.parse(v);}catch(e){fail(400,'Некорректные данные квартиры');}}}
+     try{BackupSchema.validate(b.data);}catch(e){fail(400,'Некорректная структура данных квартиры');}
      const data=JSON.stringify(b.data),updated=new Date().toISOString();db.exec('BEGIN IMMEDIATE');try{
       const current=db.prepare('SELECT * FROM documents WHERE user_id=?').get(account.id);if(current.revision!==b.revision){db.exec('ROLLBACK');return send(409,{error:'На сервере более новая версия. Загрузите её перед сохранением.'});}
       if(current.data)db.prepare('INSERT INTO versions VALUES(?,?,?,?)').run(account.id,current.revision,current.data,updated);

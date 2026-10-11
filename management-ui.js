@@ -12,14 +12,14 @@
   const urls=[...new Set([r.org?.sourceUrl,...r.entries.map(x=>x.sourceUrl)].filter(Boolean))];for(const u of urls.slice(0,3))link(parent,'Источник сведений',u);
   if(r.status==='catalog'||r.status==='conflict')add(parent,'p','Снимок загружен '+M.data.checkedAt+'. Это не онлайн-проверка ГИС ЖКХ.','muted');
  }
- function persist(choice){
+ async function persist(choice){
   if(!savedAddress)return;
   const next={...savedAddress};if(choice)next.managementOverride=choice;else delete next.managementOverride;
   const r=M.resolve(next);next.org=r.org?.name||'';next.orgSource=M.labels[r.status];
-  const before=localStorage.getItem('mydomAddress'),registryBefore=localStorage.getItem('mydomApartmentsV1');
+  const registryBefore=localStorage.getItem('mydomApartmentsV1');
   try{const registry=JSON.parse(registryBefore||'null');if(registry){const home=registry.homes.find(x=>x.id===registry.active);if(home){home.address=next;home.data.mydomAddress=JSON.stringify(next);}}
-   localStorage.setItem('mydomAddress',JSON.stringify(next));if(registry)localStorage.setItem('mydomApartmentsV1',JSON.stringify(registry));
-  }catch(error){try{if(before===null)localStorage.removeItem('mydomAddress');else localStorage.setItem('mydomAddress',before);if(registryBefore===null)localStorage.removeItem('mydomApartmentsV1');else localStorage.setItem('mydomApartmentsV1',registryBefore);}catch(_){}alert('Не удалось сохранить выбор организации. Проверьте доступность хранилища.');return;}
+   await SafeStore.commit({mydomAddress:JSON.stringify(next),...(registry?{mydomApartmentsV1:JSON.stringify(registry)}:{})});
+  }catch(error){alert(error.message);return;}
   savedAddress=next;renderAll();
  }
  function render(){
