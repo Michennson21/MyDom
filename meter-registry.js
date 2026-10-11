@@ -138,16 +138,16 @@
     const unknown=meters.filter(m=>m.status!=='archived'&&!m.nextVerification);
     const fault=meters.filter(m=>m.status!=='archived'&&(m.status==='fault'||m.seal==='damaged'));
     box.hidden=!failed&&!list.length&&!unknown.length&&!fault.length;
-    if(box.hidden)return;
+    if(box.hidden){window.HomeDesign?.renderAttention();return;}
     add(box,'h3','Важно по счётчикам');
     if(failed)add(box,'p','Не удалось прочитать карточки счётчиков. Проверьте данные в разделе «Показания».','notice');
     list.forEach(({m,event,status})=>add(box,'p',event.title+' · '+m.kind+' № '+m.serial+' · '+formatDate(event.date)+' — '+status.text,'notice'));
     if(unknown.length)add(box,'p','Уточните срок поверки: '+unknown.map(m=>m.kind+' № '+m.serial).join(', '),'muted');
     if(fault.length)add(box,'p','Есть отметка о неисправности или повреждении пломбы: '+fault.map(m=>m.kind+' № '+m.serial).join(', '),'notice');
-    add(box,'p','Для выбранной квартиры. Проверьте сроки по документам; после выполненных работ обновите карточку.','muted');button(box,'Открыть счётчики',()=>go('meters'));
+    add(box,'p','Для выбранной квартиры. Проверьте сроки по документам; после выполненных работ обновите карточку.','muted');button(box,'Открыть счётчики',()=>go('meters'));window.HomeDesign?.renderAttention();
   }
   function render() {let box=el('meterPassports');if(!box){box=document.createElement('div');box.id='meterPassports';const section=el('meters');section.querySelector('.local-note').after(box);}box.replaceChildren();drawCards(box);wireReadings();renderHome();}
-  window.MeterRegistry={render,renderHome,previous,due,calendar,today,edit,get:id=>meters.find(m=>m.id===id)};
+  window.MeterRegistry={alerts:()=>{const rows=[];for(const m of meters){if(m.status==='archived')continue;for(const e of events(m)){const d=due(e.date);if(d.days<=60)rows.push({title:e.title+' · '+d.text,detail:m.kind+' № '+m.serial+' · '+formatDate(e.date),days:d.days});}if(!m.nextVerification)rows.push({title:'Уточните срок поверки',detail:m.kind+' № '+m.serial,days:999});if(m.status==='fault'||m.seal==='damaged')rows.push({title:'Проверьте состояние счётчика',detail:m.kind+' № '+m.serial,days:-Infinity});}if(failed)rows.push({title:'Не удалось прочитать счётчики',detail:'Проверьте сохранённые данные',days:-Infinity});return rows.sort((a,b)=>a.days-b.days);},render,renderHome,previous,due,calendar,today,edit,get:id=>meters.find(m=>m.id===id)};
   const oldGo=go;go=function(id){oldGo(id);if(id==='home')renderHome();};
   const oldRenderAll=renderAll;renderAll=function(){oldRenderAll();renderHome();};
   let renderedDay=today();
