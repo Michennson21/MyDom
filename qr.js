@@ -217,7 +217,7 @@ function qrSaveError(message,field){
   else qrStatus(message);
   if(field)qrEl(field)?.setAttribute('aria-invalid','true');
 }
-function saveQRBill(){
+async function saveQRBill(){
   const errorBox=qrEl('qrSaveError');if(errorBox){errorBox.textContent='';errorBox.className='';}
   document.querySelectorAll('#qrResult [aria-invalid]').forEach(x=>x.removeAttribute('aria-invalid'));
 
@@ -235,9 +235,8 @@ function saveQRBill(){
   const record={id:Date.now(),provider,account,period,total:Number(totalText),accrued:0,debt:0,paid:0,paidDate:'',source:'qr',qrRaw:qrDraft.raw,qrFields:{...qrDraft.fields},address:qrDraft.address,createdAt:new Date().toISOString()};
   const newBills=[record,...manualBills];
   // Roll back both keys on storage failure, preserving the current in-memory state.
-  const oldAccounts=localStorage.getItem('mydomAccounts'),oldBills=localStorage.getItem('mydomManualBills');
-  try{localStorage.setItem('mydomAccounts',JSON.stringify(newAccounts));localStorage.setItem('mydomManualBills',JSON.stringify(newBills));}
-  catch(error){try{for(const [k,v] of [['mydomAccounts',oldAccounts],['mydomManualBills',oldBills]]){if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}}catch(_){}qrSaveError('Не удалось сохранить данные в браузере. Освободите место и повторите.');return;}
+  try{await SafeStore.commit({mydomAccounts:JSON.stringify(newAccounts),mydomManualBills:JSON.stringify(newBills)});}
+  catch(error){qrSaveError(error.message);return;}
   accounts=newAccounts;manualBills=newBills;closeQR();renderAll();go('bills');
   const confirmation=document.createElement('div');confirmation.className='success';confirmation.setAttribute('role','status');confirmation.textContent='Начисление сохранено. Лицевой счёт добавлен в ваши счета.';qrEl('billList').prepend(confirmation);
 }

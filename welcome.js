@@ -15,9 +15,9 @@ function renderWelcome(){
  document.getElementById('welcomeTitle').setAttribute('tabindex','-1');document.getElementById('welcomeTitle').focus();
 }
 function nextWelcome(){if(welcomeStep===1&&!savedAddress){document.getElementById('welcomeError').textContent='Сначала выберите адрес или закройте знакомство, чтобы сделать это позже.';return;}if(welcomeStep===3){closeWelcome(true);go('home');return;}welcomeStep++;renderWelcome();}
-function closeWelcome(completed){if(completed){try{localStorage.setItem('mydomWelcomeDone','1');}catch(e){}}welcome.classList.remove('show');document.querySelector('.app').inert=false;}
-const welcomeSaveAddress=saveAddress;saveAddress=function(){welcomeSaveAddress();if(welcome.classList.contains('show')&&!document.getElementById('addressModal').classList.contains('show'))renderWelcome();};
-const welcomeSaveAccount=saveAccount;saveAccount=function(){welcomeSaveAccount();if(welcome.classList.contains('show')&&!document.getElementById('accountModal').classList.contains('show'))renderWelcome();};
+async function closeWelcome(completed){if(completed){try{await SafeStore.commit({mydomWelcomeDone:'1'});}catch(e){}}welcome.classList.remove('show');document.querySelector('.app').inert=false;}
+const welcomeSaveAddress=saveAddress;saveAddress=async function(){await welcomeSaveAddress();if(welcome.classList.contains('show')&&!document.getElementById('addressModal').classList.contains('show'))renderWelcome();};
+const welcomeSaveAccount=saveAccount;saveAccount=async function(){await welcomeSaveAccount();if(welcome.classList.contains('show')&&!document.getElementById('accountModal').classList.contains('show'))renderWelcome();};
 if(!localStorage.getItem('mydomWelcomeDone')&&!savedAddress&&!accounts.length&&!manualBills.length)startWelcome();
 
 // Keep unrelated modules available if one download fails; never fall back to editing
@@ -27,6 +27,7 @@ if(!localStorage.getItem('mydomWelcomeDone')&&!savedAddress&&!accounts.length&&!
   if(src==='apartments.js'&&typeof window.addressSelection!=='function')continue;
   try{await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=reject;document.body.append(script);});}
   catch(error){console.error('Не удалось загрузить '+src);}
+  if(src==='apartments.js'&&window.ApartmentInitialization)await window.ApartmentInitialization;
  }
  if(!window.HomeDesign)renderDashboard();
  if(!window.ApartmentWorkspace?.ready){
