@@ -28,10 +28,11 @@
     if (history.length) button(p, '← Назад', () => { const previous = history.pop(); state = previous.state; previous.show(); });
     add(p, 'h3', title);
     document.querySelector('#issueModal .sheet').scrollTop = 0;
+    if(formDraft){const names={'Что случилось?':'topicStep','Какой услуги касается проблема?':'serviceStep','Что со счётчиком?':'reasonStep','Почему нужен перерасчёт?':'reasonStep','Где замечена проблема?':'scopeStep','Адресат обращения':'routeStep'};window.IssueDrafts.checkpoint({...formDraft,kind:formDraft.kind||'Выбор проблемы',guide:{...state},questionStep:names[title],questionTrail:history.map(h=>({state:h.state,step:h.show.name}))});}
     return p;
   }
   function next(show, update, current) { history.push({ state: { ...state }, show: current }); state = { ...state, ...update }; show(); }
-  function start() { state = {}; history = []; formDraft = null; topicStep(); }
+  function start() { state = {}; history = []; formDraft = {id:crypto.randomUUID(),createdAt:new Date().toISOString(),lifecycle:'draft'}; topicStep(); }
   function topicStep() {
     const p = screen('Что случилось?');
     add(p, 'p', 'Ответьте на несколько вопросов — подскажем адресата и документы.', 'muted');
@@ -156,6 +157,7 @@
         const lines = target.value.split('\n');
         if (check.checked && !lines.includes(name)) target.value = [...lines.filter(Boolean), name].join('\n');
         if (!check.checked) target.value = lines.filter(line => line !== name).join('\n');
+        target.dispatchEvent(new Event('input',{bubbles:true}));
       };
       target.addEventListener('input', () => { check.checked = target.value.split('\n').includes(name); });
     });
@@ -165,6 +167,7 @@
     const reason = reasons[g.topic]?.find(([key]) => key === g.reason)?.[1];
     return ['Услуга: ' + (services[g.service]?.[0] || 'уточняется'), reason ? 'Основание обращения: ' + reason : '', g.scope ? 'По наблюдениям заявителя: ' + ({home:'проблема замечена только в своём помещении',building:'проблема также замечена у соседей или в доме',unknown:'масштаб проблемы неизвестен'})[g.scope] + '.' : '', g.topic === 'quality' ? 'Сообщаю о перебое или ненадлежащем качестве указанной услуги. Прошу установить причину, проверить границы ответственности и сообщить порядок устранения проблемы.' : ''].filter(Boolean).join('\n');
   }
-  window.IssueGuide = { start, resume, resolveRoute, availableReasons, documents, renderDocuments, context };
+  function restore(data){const steps={topicStep,serviceStep,reasonStep,scopeStep,routeStep};formDraft={...data};state={...data.guide};history=(data.questionTrail||[]).filter(h=>steps[h.step]).map(h=>({state:h.state,show:steps[h.step]}));(steps[data.questionStep]||topicStep)();}
+  window.IssueGuide = { start, resume, restore, resolveRoute, availableReasons, documents, renderDocuments, context };
   renderIssueProviderStep = start;
 })();
