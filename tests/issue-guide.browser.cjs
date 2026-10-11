@@ -4,7 +4,7 @@ const {chromium}=require('playwright'),http=require('http'),fs=require('fs'),pat
  const root=path.resolve(__dirname,'..'),server=http.createServer((q,r)=>{try{const f=path.join(root,q.url==='/'?'index.html':q.url);r.setHeader('Content-Type',f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':'text/html');r.end(fs.readFileSync(f));}catch(_){r.statusCode=404;r.end();}}).listen(8143);
  const browser=await chromium.launch({executablePath:process.env.QR_TEST_BROWSER||undefined,args:['--no-sandbox']});
  try {
- const p=await browser.newPage({viewport:{width:390,height:844}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+ const p=await browser.newPage({serviceWorkers:"block",viewport:{width:390,height:844}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.addInitScript(()=>localStorage.setItem('mydomWelcomeDone','1'));
  await p.goto('http://localhost:8143');await p.waitForFunction(()=>!!window.IssueGuide);
  await p.evaluate(()=>{savedAddress={street:'ул. Тестовая',house:'1',apartment:'2',managementOverride:{name:'ООО Тестовая УК'}};accounts=[{provider:'Водоканал',number:'00123'}];manualBills=[{provider:'Водоканал',account:'00123',qrFields:{name:'ООО Тестовый водоканал'}}];go('issues');openIssueFlow();});
