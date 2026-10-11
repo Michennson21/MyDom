@@ -1,6 +1,6 @@
 /* Local complaint drafts. No transmission to suppliers. Reviewed 2026-10-11. */
 (function(){
- const quality=new Set(['Нет воды','Нет горячей воды','Нет отопления','Нет электричества','Слабое давление']);
+ const quality=new Set(['Перебой или ненадлежащее качество услуги','Нет воды','Нет горячей воды','Нет отопления','Нет электричества','Слабое давление']);
  function requests(kind,description=''){
   if(quality.has(kind))return 'Прошу зарегистрировать сообщение, установить причину и продолжительность перебоя или отклонения качества услуги. При необходимости прошу согласовать проверку и оформить её результаты актом, предоставить мне его экземпляр. Прошу принять меры к восстановлению надлежащего предоставления услуги и сообщить о принятых мерах. При наличии предусмотренных законом оснований прошу произвести перерасчёт платы за соответствующий период.\n\nПрошу рассмотреть заявление с учётом Правил предоставления коммунальных услуг, утверждённых постановлением Правительства РФ от 06.05.2011 № 354, в части, применимой к указанным обстоятельствам.';
   if(kind==='Неверное начисление')return 'Прошу проверить начисление за указанный период, предоставить подробный расчёт с указанием применённых тарифов, объёмов потребления, показаний приборов учёта и иных оснований расчёта. При выявлении ошибки прошу исправить начисление и направить корректные сведения о состоянии лицевого счёта.';
@@ -11,7 +11,7 @@
   if(['Проблема в подъезде','Содержание дома','Аварийная ситуация'].includes(kind))return 'Прошу зарегистрировать обращение, организовать обследование указанного участка общего имущества и зафиксировать результаты. Прошу принять меры в пределах вашей ответственности, сообщить сроки устранения выявленных недостатков и предоставить письменный ответ о результатах. Прошу учитывать Правила содержания общего имущества в многоквартирном доме, утверждённые постановлением Правительства РФ от 13.08.2006 № 491, в части, применимой к ситуации.';
   return 'Прошу рассмотреть вопрос по указанной услуге, уточнить необходимые сведения и принять меры в пределах вашей ответственности. Прошу предоставить мотивированный ответ с описанием результатов проверки и принятых мер.';
  }
- function compose(d){return ['Кому: '+d.recipient,'От: '+d.applicant,'Адрес помещения: '+d.address,d.account?'Лицевой счёт: '+d.account:'','Адрес для ответа (почтовый или электронный): '+d.reply,d.contact?'Телефон / контакт: '+d.contact:'','', 'ЗАЯВЛЕНИЕ','По вопросу: '+d.kind,'',d.period?'Дата, время или период: '+d.period:'',d.dispatch?'Предыдущее обращение / заявка в диспетчерскую: '+d.dispatch:'','',requests(d.kind,d.text),'','Прошу направить ответ по указанному выше адресу.',d.attachments?'\nПриложения (предоставляются заявителем отдельно):\n'+d.attachments:'','', 'Дата: '+new Date(d.createdAt).toLocaleDateString('ru-RU'),'Подпись: __________________ / '+d.applicant+' /'].filter(v=>v!==null).join('\n');}
+ function compose(d){return ['Кому: '+d.recipient,'От: '+d.applicant,'Адрес помещения: '+d.address,d.account?'Лицевой счёт: '+d.account:'','Адрес для ответа (почтовый или электронный): '+d.reply,d.contact?'Телефон / контакт: '+d.contact:'','', 'ЗАЯВЛЕНИЕ','По вопросу: '+d.kind,window.IssueGuide?.context(d.guide)||'','',d.period?'Дата, время или период: '+d.period:'',d.dispatch?'Предыдущее обращение / заявка в диспетчерскую: '+d.dispatch:'','',requests(d.kind,d.guide?.reason==='readings'?'показания счётчика':d.text),'','Прошу направить ответ по указанному выше адресу.',d.attachments?'\nПриложения (предоставляются заявителем отдельно):\n'+d.attachments:'','', 'Дата: '+new Date(d.createdAt).toLocaleDateString('ru-RU'),'Подпись: __________________ / '+d.applicant+' /'].filter(v=>v!==null).join('\n');}
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function html(text){return '<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Заявление</title><style>body{margin:24px;font:16px/1.5 Georgia,serif;color:#000;background:#fff}main{max-width:180mm;margin:auto;white-space:pre-wrap;overflow-wrap:anywhere}@page{size:A4;margin:20mm}@media print{body{margin:0}main{max-width:none}}</style><body><main>'+esc(text)+'</main></body></html>';}
  window.IssueDrafts={compose,requests,html};
@@ -32,14 +32,15 @@
  handleIssueKind=function(provider,kind){renderIssueForm(provider,kind);};
  renderIssueForm=function(provider,kind,existing){
   const p=el('issueStep');p.replaceChildren();const acc=accounts.filter(a=>a.provider===provider);
-  const number=existing?.account||(acc.length===1?acc[0].number:'');
-  button(p,'← Выбор проблемы',()=>renderIssueKindStep(provider),true);add(p,'h3',kind);
+  const number=existing?.account??(acc.length===1?acc[0].number:'');
+  button(p,'← Выбор проблемы',()=>existing?.guide?window.IssueGuide.start():renderIssueKindStep(provider),true);add(p,'h3',kind);
+  if(existing?.guide?.explanation)add(p,'p',existing.guide.explanation,'notice');
   if(kind==='Аварийная ситуация')add(p,'p','При угрозе жизни или безопасности звоните 112. Подготовка документа не вызывает аварийную службу.','redbox');
   if(quality.has(kind))add(p,'p','Сообщите о перебое в аварийно-диспетчерскую службу. Запишите номер заявки и время регистрации.','notice');
   if(provider==='Водоканал'&&kind==='Нет воды'&&waterIncidentForAddress())add(p,'p','В приложении есть сообщение об отключении по адресу. Вы можете подготовить обращение независимо от него.','notice');
   add(p,'p','Сверьте адресата с квитанцией или договором: получатель платежа может отличаться от исполнителя услуги. Название можно исправить.','muted');
   const f=add(p,'form','');
-  field(f,'issueRecipient','Кому: полное название организации',existing?.recipient||recipient(provider,number),false,true);
+  field(f,'issueRecipient','Кому: полное название организации',existing?.recipient??recipient(provider,number),false,true);
   field(f,'issueApplicant','Ваши фамилия, имя, отчество (при наличии)',existing?.applicant||'',false,true);
   field(f,'issueAddress','Адрес помещения',existing?.address||address(),false,true);
   field(f,'issueAccount','Лицевой счёт',number);
@@ -51,10 +52,11 @@
   add(f,'p','Это описание останется в карточке обращения и не будет дословно вставлено в документ. Приложение подготовит типовую формулировку; конкретные суммы, показания и другие важные детали проверьте и дополните в редакторе.','muted');
   facts.placeholder=kind==='Не учтён платёж'?'Дата, сумма, способ оплаты, номер операции и период.':kind==='Неверное начисление'?'Период, услуга, начисленная сумма и в чём вы видите ошибку.':'Когда и где обнаружили проблему, что наблюдаете, предпринимали ли какие-либо действия.';
   field(f,'issueDispatch','Ранее поданная заявка: номер, дата, ответ',existing?.dispatch||'');
-  field(f,'issueAttachments','Перечень приложений: квитанции, чеки, фото, акты',existing?.attachments||'',true);
+  const attachmentList=field(f,'issueAttachments','Перечень приложений: квитанции, чеки, фото, акты',existing?.attachments||'',true);
+  window.IssueGuide?.renderDocuments(f,existing?.guide,kind,attachmentList);
   add(f,'p','Файлы к заявлению нужно приложить самостоятельно. Документ не отправляется поставщику автоматически.','notice');
   const submit=add(f,'button','Подготовить текст','btn block');submit.type='submit';
-  f.onsubmit=e=>{e.preventDefault();if(!f.reportValidity())return;const value=id=>el(id).value.trim();const data={id:existing?.id||crypto.randomUUID(),provider,kind,recipient:value('issueRecipient'),applicant:value('issueApplicant'),address:value('issueAddress'),account:value('issueAccount'),reply:value('issueReply'),contact:value('issueContact'),period:value('issuePeriod'),text:value('issueText'),dispatch:value('issueDispatch'),attachments:value('issueAttachments'),createdAt:existing?.createdAt||new Date().toISOString(),status:'Подготовлено · не отправлено поставщику'};
+  f.onsubmit=e=>{e.preventDefault();if(!f.reportValidity())return;const value=id=>el(id).value.trim();const data={id:existing?.id||crypto.randomUUID(),provider,kind,guide:existing?.guide,recipient:value('issueRecipient'),applicant:value('issueApplicant'),address:value('issueAddress'),account:value('issueAccount'),reply:value('issueReply'),contact:value('issueContact'),period:value('issuePeriod'),text:value('issueText'),dispatch:value('issueDispatch'),attachments:value('issueAttachments'),createdAt:existing?.createdAt||new Date().toISOString(),status:'Подготовлено · не отправлено поставщику'};
    if(!data.recipient||!data.applicant||!data.address||!data.reply||!data.text){alert('Заполните обязательные поля.');return;}data.documentText=compose(data);preview(data);};
   el('issueModal').querySelector('.sheet').scrollTop=0;
  };
