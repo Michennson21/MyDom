@@ -1,0 +1,32 @@
+// Run with NODE_PATH for Playwright and QR_TEST_BROWSER for Chromium. Synthetic data only.
+const {chromium}=require('playwright'),http=require('http'),fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
+(async()=>{
+ const root=path.resolve(__dirname,'..'),server=http.createServer((q,r)=>{try{const f=path.join(root,q.url==='/'?'index.html':q.url);r.setHeader('Content-Type',f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':'text/html');r.end(fs.readFileSync(f));}catch(_){r.statusCode=404;r.end();}}).listen(8141);
+ const browser=await chromium.launch({executablePath:process.env.QR_TEST_BROWSER||undefined,args:['--no-sandbox']});
+ try{
+ const p=await browser.newPage({viewport:{width:390,height:844}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+ await p.addInitScript(()=>localStorage.setItem('mydomWelcomeDone','1'));
+ await p.goto('http://localhost:8141');await p.waitForFunction(()=>!!window.IssueDrafts);
+ await p.evaluate(()=>{savedAddress={street:'ул. Тестовая',house:'1',apartment:'2',managementOverride:{name:'ООО Тестовая УК'}};accounts=[{provider:'Водоканал',number:'00123'}];manualBills=[{provider:'Водоканал',account:'00123',qrFields:{name:'ООО Тестовый водоканал'}}];localStorage.setItem('mydomAddress',JSON.stringify(savedAddress));localStorage.setItem('mydomAccounts',JSON.stringify(accounts));localStorage.setItem('mydomManualBills',JSON.stringify(manualBills));});
+ await p.reload();await p.waitForFunction(()=>!!window.IssueDrafts);await p.evaluate(()=>{go('issues');openIssueFlow();renderIssueForm('Водоканал','Нет воды');});
+ assert.equal(await p.locator('#issueRecipient').inputValue(),'ООО Тестовый водоканал');assert.equal(await p.locator('#issueAccount').inputValue(),'00123');
+ await p.locator('#issueApplicant').fill('Тестовый Иван Иванович');await p.locator('#issueReply').fill('test@example.test');await p.locator('#issueText').fill('Холодная вода отсутствует. <script>window.pwned=1</script>');await p.locator('#issuePeriod').fill('11.10.2026 с 08:00');await p.locator('#issueAttachments').fill('Фото крана');
+ await p.getByRole('button',{name:'Подготовить текст',exact:true}).click();const doc=await p.locator('#issueDocument').inputValue();assert(doc.includes('№ 354'));assert(doc.includes('При наличии'));assert(doc.includes('00123'));
+ await p.locator('#issueDocument').fill(doc+'\nПроверенная правка.');await p.getByRole('button',{name:'Сохранить обращение',exact:true}).click();assert.equal(await p.evaluate(()=>residentIssues.length),1);
+ // Export the edited text and inspect escaping in a standalone document.
+ const [download]=await Promise.all([p.waitForEvent('download'),p.getByRole('button',{name:'Скачать документ (HTML)',exact:true}).click()]);const output=await download.path(),html=fs.readFileSync(output,'utf8');assert(html.includes('Проверенная правка.'));assert(html.includes('&lt;script&gt;'));assert(!html.includes('<script>'));assert(html.includes('@page'));
+ const [txt]=await Promise.all([p.waitForEvent('download'),p.getByRole('button',{name:'Скачать текст (TXT)',exact:true}).click()]);assert(fs.readFileSync(await txt.path(),'utf8').includes('Проверенная правка.'));
+ await p.getByRole('button',{name:'Печать / PDF',exact:true}).click();await p.waitForFunction(()=>!!document.querySelector('iframe[title="Печать обращения"]')?.contentDocument?.querySelector('main'));assert((await p.frameLocator('iframe[title="Печать обращения"]').locator('main').innerText()).includes('Проверенная правка.'));assert.equal(await p.evaluate(()=>window.pwned),undefined);
+ await p.reload();await p.waitForFunction(()=>!!window.IssueDrafts);await p.evaluate(()=>go('issues'));await p.getByRole('button',{name:'Открыть / выгрузить',exact:true}).click();assert((await p.locator('#issueDocument').inputValue()).endsWith('Проверенная правка.'));
+ // Persist failure must retain the preview and not report success or add a record.
+ await p.evaluate(()=>{window.oldSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='mydomResidentIssues')throw Error('full');return oldSet.call(this,k,v);};});p.once('dialog',d=>d.accept());await p.locator('#issueDocument').fill('Несохранённая правка');await p.getByRole('button',{name:'Сохранить обращение',exact:true}).click();assert((await p.evaluate(()=>residentIssues[0].documentText)).endsWith('Проверенная правка.'));await p.evaluate(()=>Storage.prototype.setItem=oldSet);
+ // Supplier resolution and category-specific requests.
+ await p.evaluate(()=>renderIssueForm('Управляющая компания','Содержание дома'));assert.equal(await p.locator('#issueRecipient').inputValue(),'ООО Тестовая УК');assert(await p.evaluate(()=>IssueDrafts.requests('Содержание дома').includes('№ 491')));assert(!(await p.evaluate(()=>IssueDrafts.requests('Не учтён платёж'))).includes('нарушили'));
+ // Legacy drafts remain readable and can be completed for export.
+ await p.evaluate(()=>{residentIssues=[{id:1,provider:'Водоканал',kind:'Другое',text:'Старое обращение',address:'Тестовый адрес',createdAt:new Date().toISOString()}];renderIssueList();closeIssueFlow();});await p.getByRole('button',{name:'Открыть / выгрузить',exact:true}).click();assert.equal(await p.locator('#issueText').inputValue(),'Старое обращение');
+ for(const width of [320,390,1024]){await p.setViewportSize({width,height:844});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
+ // A new apartment has no issues, returning restores the original draft.
+ await p.evaluate(()=>{closeIssueFlow();go('home');});const first=await p.locator('#activeApartment').inputValue();await p.locator('#addApartment').click();await p.locator('#apartmentInput').fill('3');await Promise.all([p.waitForEvent('load'),p.locator('#addressModal .actions .btn').last().click()]);await p.waitForFunction(()=>!!window.IssueDrafts);assert.equal(await p.evaluate(()=>residentIssues.length),0);await Promise.all([p.waitForEvent('load'),p.locator('#activeApartment').selectOption(first)]);await p.waitForFunction(()=>!!window.IssueDrafts);assert.equal(await p.evaluate(()=>residentIssues.length),1);
+ assert.deepEqual(errors,[]);console.log('PASS: templates, editable recipient, preview, HTML/TXT/print, escaping, reload, quota failure, legacy, mobile widths, apartment isolation');
+ }finally{await browser.close();server.close();}
+})().catch(e=>{console.error(e);process.exit(1)});
