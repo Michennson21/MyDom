@@ -33,7 +33,7 @@
  renderIssueForm=function(provider,kind,existing){
   const p=el('issueStep');p.replaceChildren();const acc=accounts.filter(a=>a.provider===provider);
   const number=existing?.account??(acc.length===1?acc[0].number:'');
-  button(p,'← Выбор проблемы',()=>existing?.guide?window.IssueGuide.start():renderIssueKindStep(provider),true);add(p,'h3',kind);
+  let collect;button(p,'← Назад',()=>existing?.guide?window.IssueGuide.resume(collect()):renderIssueKindStep(provider),true);add(p,'h3',kind);
   if(existing?.guide?.explanation)add(p,'p',existing.guide.explanation,'notice');
   if(kind==='Аварийная ситуация')add(p,'p','При угрозе жизни или безопасности звоните 112. Подготовка документа не вызывает аварийную службу.','redbox');
   if(quality.has(kind))add(p,'p','Сообщите о перебое в аварийно-диспетчерскую службу. Запишите номер заявки и время регистрации.','notice');
@@ -56,12 +56,13 @@
   window.IssueGuide?.renderDocuments(f,existing?.guide,kind,attachmentList);
   add(f,'p','Файлы к заявлению нужно приложить самостоятельно. Документ не отправляется поставщику автоматически.','notice');
   const submit=add(f,'button','Подготовить текст','btn block');submit.type='submit';
-  f.onsubmit=e=>{e.preventDefault();if(!f.reportValidity())return;const value=id=>el(id).value.trim();const data={id:existing?.id||crypto.randomUUID(),provider,kind,guide:existing?.guide,recipient:value('issueRecipient'),applicant:value('issueApplicant'),address:value('issueAddress'),account:value('issueAccount'),reply:value('issueReply'),contact:value('issueContact'),period:value('issuePeriod'),text:value('issueText'),dispatch:value('issueDispatch'),attachments:value('issueAttachments'),createdAt:existing?.createdAt||new Date().toISOString(),status:'Подготовлено · не отправлено поставщику'};
-   if(!data.recipient||!data.applicant||!data.address||!data.reply||!data.text){alert('Заполните обязательные поля.');return;}data.documentText=compose(data);preview(data);};
+  collect=()=>{const value=id=>el(id).value.trim();return {...existing,documentBasis:existing?.documentBasis||(existing?.documentText?compose(existing):undefined),id:existing?.id||crypto.randomUUID(),provider,kind,guide:existing?.guide,recipient:value('issueRecipient'),applicant:value('issueApplicant'),address:value('issueAddress'),account:value('issueAccount'),reply:value('issueReply'),contact:value('issueContact'),period:value('issuePeriod'),text:value('issueText'),dispatch:value('issueDispatch'),attachments:value('issueAttachments'),createdAt:existing?.createdAt||new Date().toISOString(),status:'Подготовлено · не отправлено поставщику'};};
+  f.onsubmit=e=>{e.preventDefault();if(!f.reportValidity())return;const data=collect();
+   if(!data.recipient||!data.applicant||!data.address||!data.reply||!data.text){alert('Заполните обязательные поля.');return;}const generated=compose(data),basis=existing?.documentBasis|| (existing?compose(existing):'');if(existing?.documentText&&existing.documentText!==basis&&generated!==basis&&!confirm('Данные обращения изменились. Сформировать текст заново? Ручные правки в тексте будут заменены.'))return;data.documentText=existing?.documentText&&generated===basis?existing.documentText:generated;data.documentBasis=generated;preview(data);};
   el('issueModal').querySelector('.sheet').scrollTop=0;
  };
  function persist(d){const next=[d,...residentIssues.filter(x=>x.id!==d.id)];try{localStorage.setItem('mydomResidentIssues',JSON.stringify(next));}catch(_){alert('Не удалось сохранить обращение. Текст остаётся на экране. Освободите место и повторите.');return false;}residentIssues=next;renderIssueList();return true;}
- function preview(d){draft={...d};const p=el('issueStep');p.replaceChildren();add(p,'h3','Проверьте обращение');add(p,'p','Исходное описание не включено в документ. Проверьте и дополните фактические обстоятельства, суммы и показания. Перерасчёт зависит от установленных оснований.','muted');const area=field(p,'issueDocument','Текст документа',draft.documentText||compose(draft),true,true);area.rows=18;area.maxLength=30000;
+ function preview(d){draft={...d};const p=el('issueStep');p.replaceChildren();button(p,'← Назад',()=>renderIssueForm(draft.provider,draft.kind,{...draft,documentText:el('issueDocument').value}),true);add(p,'h3','Проверьте обращение');add(p,'p','Исходное описание не включено в документ. Проверьте и дополните фактические обстоятельства, суммы и показания. Перерасчёт зависит от установленных оснований.','muted');const area=field(p,'issueDocument','Текст документа',draft.documentText||compose(draft),true,true);area.rows=18;area.maxLength=30000;
   const status=add(p,'p','Не отправлено поставщику','notice');status.setAttribute('role','status');
   const save=()=>{if(!area.value.trim()){alert('Текст обращения пуст.');return false;}draft.documentText=area.value;draft.updatedAt=new Date().toISOString();if(!persist({...draft}))return false;status.textContent='Сохранено на этом устройстве. Не отправлено поставщику.';return true;};
   button(p,'Сохранить обращение',save);

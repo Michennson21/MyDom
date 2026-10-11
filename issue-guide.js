@@ -2,8 +2,8 @@
 (function () {
   const services = {
     water: ['Холодная вода', 'Водоканал', /водоканал|холодн.*вод/i],
-    hot: ['Горячая вода', 'Нальчикская теплоснабжающая компания', /тепло|горяч.*вод/i],
-    heat: ['Отопление', 'Нальчикская теплоснабжающая компания', /тепло|отоплен/i],
+    hot: ['Горячая вода', 'Нальчикская теплоснабжающая компания', /нтс|тепловые сети|теплоснабжающ|горяч.*вод/i],
+    heat: ['Отопление', 'Нальчикская теплоснабжающая компания', /нтс|тепловые сети|теплоснабжающ|отоплен/i],
     power: ['Электроэнергия', 'Электроэнергия', /электро|энерго|свет/i],
     gas: ['Газ', 'Газпром межрегионгаз', /газ/i],
     waste: ['Вывоз мусора', 'Вывоз мусора', /экотехпром|отход|мусор|тко/i],
@@ -19,7 +19,9 @@
     recalc: [['readings', 'Не учтены показания счётчика'], ['quality', 'Перебой или плохое качество услуги'], ['absence', 'Временное отсутствие'], ['error', 'Ошибка в расчёте'], ['other', 'Другая причина / не знаю']],
     meter: [['broken', 'Не работает или повреждён'], ['verification', 'Вопрос о поверке'], ['replacement', 'Замена или ввод в эксплуатацию'], ['readings', 'Не принимают показания'], ['other', 'Другая проблема со счётчиком']]
   };
-  let state = {}, history = [];
+  let state = {}, history = [], formDraft = null;
+  const fixedSupplier = g => ['water','hot','heat'].includes(g.service);
+  const afterDetails = () => fixedSupplier(state) || state.topic === 'other' ? routeStep : payerStep;
   const panel = () => document.getElementById('issueStep');
   function add(p, tag, text, cls) { const e = document.createElement(tag); e.textContent = text; if (cls) e.className = cls; p.append(e); return e; }
   function button(p, text, action) { const b = add(p, 'button', text, 'btn secondary block'); b.type = 'button'; b.onclick = action; return b; }
@@ -31,7 +33,7 @@
     return p;
   }
   function next(show, update, current) { history.push({ state: { ...state }, show: current }); state = { ...state, ...update }; show(); }
-  function start() { state = {}; history = []; topicStep(); }
+  function start() { state = {}; history = []; formDraft = null; topicStep(); }
   function topicStep() {
     const p = screen('Что случилось?');
     add(p, 'p', 'Ответьте на несколько вопросов — подскажем адресата и документы.', 'muted');
@@ -40,18 +42,17 @@
   }
   function serviceStep() {
     const p = screen('Какой услуги касается проблема?');
-    Object.entries(services).filter(([key]) => state.topic !== 'meter' || !['waste', 'housing'].includes(key)).forEach(([service, [label]]) => button(p, label, () => next(reasons[state.topic] ? reasonStep : state.topic === 'quality' ? scopeStep : payerStep, { service }, serviceStep)));
+    Object.entries(services).filter(([key]) => state.topic !== 'meter' || !['waste', 'housing'].includes(key)).forEach(([service, [label]]) => button(p, label, () => next(reasons[state.topic] ? reasonStep : state.topic === 'quality' ? scopeStep : (fixedSupplier({service}) || state.topic === 'other' ? routeStep : payerStep), { service }, serviceStep)));
   }
   function reasonStep() {
     const p = screen(state.topic === 'meter' ? 'Что со счётчиком?' : 'Почему нужен перерасчёт?');
-    reasons[state.topic].forEach(([reason, label]) => button(p, label, () => next(state.topic === 'meter' ? routeStep : payerStep, { reason }, reasonStep)));
+    reasons[state.topic].forEach(([reason, label]) => button(p, label, () => next(state.topic === 'meter' ? routeStep : afterDetails(), { reason }, reasonStep)));
   }
   function scopeStep() {
     const p = screen('Где замечена проблема?');
     [['home', 'Только в моей квартире / доме'], ['building', 'Во всём доме или у соседей'], ['unknown', 'Не знаю']].forEach(([scope, label]) => button(p, label, () => next(routeStep, { scope }, scopeStep)));
   }
   function payerStep() {
-    if (state.topic === 'other') { routeStep(); return; }
     const p = screen('Как услуга указана в квитанции?');
     add(p, 'p', 'Это поможет определить, у кого запросить проверку расчёта.', 'muted');
     [['supplier', 'Отдельный поставщик услуги'], ['management', 'Управляющая компания / ТСЖ'], ['unknown', 'Не знаю / нет квитанции']].forEach(([payer, label]) => button(p, label, () => next(routeStep, { payer }, payerStep)));
@@ -62,6 +63,19 @@
   }
   function routeStep() {
     const p = screen('Кому подготовить обращение');
+    // These services have an explicit city supplier, independent of saved accounts.
+    if (fixedSupplier(state)) {
+      const service=services[state.service], nts=state.service!=='water';
+      const name=nts?'НТС — ООО «Нальчикские тепловые сети»':'Водоканал';
+      const explanation=service[0]+': адресат — '+name+'.';
+      add(p,'p',explanation,'notice');
+      const seen=new Set();
+      const items=accounts.filter(a=>service[2].test(a.provider)).filter(a=>{if(seen.has(a.number))return false;seen.add(a.number);return true;});
+      const prepare=a=>finish(a?.provider||service[1],nts?'ООО «Нальчикские тепловые сети»':undefined,explanation,a?.number||'');
+      if(items.length>1){add(p,'p','Выберите лицевой счёт для этой услуги.','muted');items.forEach(a=>button(p,'Счёт '+a.number,()=>prepare(a)));}
+      else {if(!items.length)add(p,'p','Лицевой счёт можно указать позже в форме.','muted');button(p,'Подготовить: '+(nts?'НТС':name),()=>prepare(items[0]));}
+      return;
+    }
     const management = state.topic === 'common' || state.service === 'housing' || state.payer === 'management' || (state.topic === 'quality' && !savedAddress?.isPrivate && state.service !== 'gas' && state.service !== 'waste');
     const service = services[state.service] || services.other;
     const uncertain = state.payer === 'unknown' || state.service === 'other';
@@ -89,10 +103,25 @@
   }
   function finish(provider, recipient, explanation, account) {
     const guide = { ...state, explanation };
-    const data = { guide, account };
-    // Leave resolution to existing QR/management logic when an actual supplier was found.
-    if (recipient === '') data.recipient = '';
+    const sameRoute=formDraft?.provider===provider && formDraft?.guide?.service===guide.service && formDraft?.guide?.payer===guide.payer && (account===undefined || (formDraft?.routeAccount??formDraft?.account)===account);
+    const data = { ...formDraft, guide, provider, account, routeAccount:account };
+    // Reuse typed contact/facts on back/forward, but never carry another service's recipient/account.
+    if(sameRoute){data.recipient=formDraft.recipient;data.account=formDraft.account;}
+    else if(recipient!==undefined)data.recipient=recipient;
+    else delete data.recipient;
     renderIssueForm(provider, kind(guide), data);
+  }
+  function resume(data) {
+    formDraft={...data};state={...data.guide};
+    // Reconstruct the question trail, including for a reopened saved complaint.
+    history=[{state:{},show:topicStep}];
+    if(state.topic!=='common') {
+      history.push({state:{topic:state.topic},show:serviceStep});
+      if(reasons[state.topic])history.push({state:{topic:state.topic,service:state.service},show:reasonStep});
+      else if(state.topic==='quality')history.push({state:{topic:state.topic,service:state.service},show:scopeStep});
+      if(state.topic!=='meter'&&state.topic!=='quality'&&state.topic!=='other'&&!fixedSupplier(state))history.push({state:{topic:state.topic,service:state.service,reason:state.reason},show:payerStep});
+    }
+    routeStep();
   }
   const bill = ['Квитанция за спорный период', 'Показывает начисление и лицевой счёт.'];
   const meterPhoto = ['Фото счётчика с показаниями и заводским номером', 'Сделайте фото только при безопасном доступе. Текущее фото не подтверждает показания за прошлые периоды.'];
@@ -142,6 +171,6 @@
     const reason = reasons[g.topic]?.find(([key]) => key === g.reason)?.[1];
     return ['Услуга: ' + (services[g.service]?.[0] || 'уточняется'), reason ? 'Основание обращения: ' + reason : '', g.scope ? 'По наблюдениям заявителя: ' + ({home:'проблема замечена только в своём помещении',building:'проблема также замечена у соседей или в доме',unknown:'масштаб проблемы неизвестен'})[g.scope] + '.' : '', g.topic === 'quality' ? 'Сообщаю о перебое или ненадлежащем качестве указанной услуги. Прошу установить причину, проверить границы ответственности и сообщить порядок устранения проблемы.' : ''].filter(Boolean).join('\n');
   }
-  window.IssueGuide = { start, documents, renderDocuments, context };
+  window.IssueGuide = { start, resume, documents, renderDocuments, context };
   renderIssueProviderStep = start;
 })();
