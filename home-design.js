@@ -21,7 +21,7 @@
  if(el('houseEventsBlock'))outages.append(el('houseEventsBlock'));
  // Existing address selector keeps its native accessibility and apartment switch behavior.
  home.querySelector('.address').after(el('homeStatus'));el('homeStatus').after(attention);attention.after(services);services.after(outages);
- const info=add(el('homeinfo'),'div','','card');info.id='appInformation';add(info,'div','О приложении','title');const version=home.querySelector('.version-label');if(version){version.textContent='Тестовая версия · 0.37';info.append(version);}document.title='Мой дом — Нальчик v0.37';add(info,'p','Данные сохраняются в этом браузере. Серверная копия доступна только после подключения сервера. Сохранённые показания и обращения не отправляются поставщикам автоматически.','muted');
+ const info=add(el('homeinfo'),'div','','card');info.id='appInformation';add(info,'div','О приложении','title');const version=home.querySelector('.version-label');if(version){version.textContent='Тестовая версия · 0.38';info.append(version);}document.title='Мой дом — Нальчик v0.38';add(info,'p','Данные сохраняются в этом браузере. Серверная копия доступна только после подключения сервера. Сохранённые показания и обращения не отправляются поставщикам автоматически.','muted');
  function moveNotifications(){if(el('notificationPanel'))el('homeinfo').append(el('notificationPanel'));}
  const originalEnsure=ensureNotificationPanel;ensureNotificationPanel=function(){originalEnsure();moveNotifications();};moveNotifications();
  function renderSummary(){

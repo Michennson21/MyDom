@@ -40,9 +40,15 @@
     if (!modal) { modal=add(document.body,'div','','modal center'); modal.id='meterPassportModal'; modal.setAttribute('role','dialog'); modal.setAttribute('aria-modal','true'); modal.setAttribute('aria-labelledby','meterPassportTitle'); modal.addEventListener('keydown',e=>{if(e.key==='Escape')close();}); }
     modal.replaceChildren(); const sheet=add(modal,'div','','sheet'); add(sheet,'h3',existing.id?'Карточка счётчика':'Добавить счётчик').id='meterPassportTitle';
     add(sheet,'p','Данные относятся к выбранной квартире. Даты перепишите из документов на прибор или сведений о поверке.','muted');
+    if(existing.replacesId&&!existing.id)add(sheet,'p','При сохранении новый прибор получит отдельную историю, а прежняя карточка перейдёт в архив. Введите номер нового прибора.','notice');
     if(existing.id)add(sheet,'p','При замене создайте новую карточку, а прежнюю переведите в архив. Изменение номера здесь исправляет данные того же прибора.','muted');
     const f=add(sheet,'form');
-    select(f,'kind','Услуга',kinds.map(v=>[v,v]),existing.kind||kinds[0]);
+    const kindField=select(f,'kind','Услуга',kinds.map(v=>[v,v]),existing.kind||kinds[0]);
+    const tariffField=select(f,'tariffCount','Тарифность электросчётчика',[['1','Один тариф'],['2','Два тарифа: Т1 / Т2'],['3','Три тарифа: Т1 / Т2 / Т3']],String(existing.tariffCount||1));
+    const heatUnit=select(f,'unit','Единица теплосчётчика — как на дисплее',[['Гкал','Гкал'],['кВт·ч','кВт·ч'],['МВт·ч','МВт·ч']],existing.unit||'Гкал');
+    const heatScope=select(f,'heatScope','Это индивидуальный теплосчётчик вашего помещения?',[['unknown','Не подтверждено'],['individual','Да, индивидуальный прибор']],existing.individual?'individual':'unknown');
+    const units=add(f,'p','','muted');
+    const configureFields=()=>{for(const [e,visible] of [[tariffField,kindField.value==='Электроэнергия'],[heatUnit,kindField.value==='Тепло'],[heatScope,kindField.value==='Тепло']]){e.hidden=!visible;e.previousElementSibling.hidden=!visible;}units.textContent=kindField.value==='Электроэнергия'?'Вводите накопленные показания Т1, Т2, Т3 с дисплея. Суммарное значение вместо отдельного тарифа не вводите.':kindField.value==='Тепло'?'Не переносите сюда показания общедомового прибора или распределителя. Единицы не пересчитываются автоматически.':'Вода и газ: накопленное показание в м³.';};kindField.onchange=configureFields;configureFields();
     field(f,'serial','Заводской номер',existing.serial,'text',true);
     field(f,'model','Модель (необязательно)',existing.model);
     field(f,'location','Где установлен: кухня, ванная и т. п.',existing.location);
@@ -69,7 +75,9 @@
     f.onsubmit=async e=>{
       e.preventDefault(); const value=n=>el('passport-'+n).value.trim(); const data={...existing,id:existing.id||crypto.randomUUID()};
       ['kind','serial','model','location','provider','account','installed','commissioned','verification','nextVerification','seal','status','actionTitle','actionDate','notes'].forEach(n=>data[n]=value(n));
+      data.tariffCount=data.kind==='Электроэнергия'?Number(value('tariffCount')):1;data.unit=MeterValues.unit({kind:data.kind,unit:value('unit')});data.individual=data.kind==='Тепло'&&value('heatScope')==='individual';
       const fail=message=>{error.hidden=false;error.textContent=message;error.scrollIntoView({block:'nearest'});};
+      if(existing.id&&history().some(r=>matches(r,existing))&&(data.kind!==existing.kind||MeterValues.unit(data)!==MeterValues.unit(existing)||MeterValues.count(data)!==MeterValues.count(existing)))return fail('У прибора уже есть история. Нельзя менять услугу, единицу или тарифность. Для другого прибора используйте «Заменить счётчик».');
       if(!data.serial)return fail('Укажите заводской номер счётчика.');
       if(meters.some(m=>m.id!==data.id&&identity(m)===identity(data)))return fail('Такой счётчик уже сохранён. Откройте его карточку.');
       if(['installed','commissioned','verification','nextVerification','actionDate'].some(k=>data[k]&&!Number.isFinite(day(data[k]))))return fail('Проверьте даты.');
@@ -81,7 +89,7 @@
       data.readingIdentity=existing.readingIdentity||{kind:data.kind,provider:data.provider,account:data.account,serial:data.serial};
       data.updatedAt=new Date().toISOString();data.createdAt=existing.createdAt||data.updatedAt;
       const rows=history().map(r=>existing.id&&matches(r,existing)?{...r,meterId:data.id}:r);
-      if(await commit([data,...meters.filter(m=>m.id!==data.id)],rows)){close();window.MeterReadings?.reload();render();}
+      if(await commit([data,...meters.filter(m=>m.id!==data.id).map(m=>!existing.id&&data.replacesId===m.id?{...m,status:'archived',replacedBy:data.id}:m)],rows)){close();window.MeterReadings?.reload();render();}
     };
     modal.classList.add('show');sheet.scrollTop=0;el('passport-serial').focus();
   }
@@ -113,10 +121,12 @@
       if(!m.nextVerification&&m.status!=='archived')add(c,'p','Уточните срок поверки: без даты заранее напомнить о ней невозможно.','notice');
       events(m).forEach(event=>{const status=due(event.date);add(c,'p',event.title+' · '+formatDate(event.date)+' · '+status.text,status.level==='future'?'muted':'notice');if(status.days>=0)button(c,event.type==='verification'?'Напомнить о поверке в календаре':'Добавить действие в календарь',()=>download(m,event));});
       const rows=history().filter(r=>matches(r,m));
-      if(rows.length){add(c,'p','Последнее сохранённое показание: '+rows[0].value+' м³ · '+new Date(rows[0].createdAt).toLocaleDateString('ru-RU'),'muted');if(rows.length>1&&rows[0].value>=rows[1].value)add(c,'p','Разница с предыдущим: '+Number((rows[0].value-rows[1].value).toFixed(3))+' м³','muted');}
+      if(rows.length){add(c,'p','Последнее сохранённое показание: '+MeterValues.format(rows[0])+' · '+new Date(rows[0].createdAt).toLocaleDateString('ru-RU'),'muted');const diff=MeterValues.delta(rows[0],rows[1]);if(diff)add(c,'p','Разница с предыдущим: '+diff,'muted');}
+      if(m.kind==='Тепло'&&!m.individual)add(c,'p','Показания доступны только после подтверждения индивидуального теплосчётчика в карточке.','notice');
+      if(m.status!=='archived')button(c,'Заменить счётчик',()=>{edit({kind:m.kind,provider:m.provider,account:m.account,location:m.location,tariffCount:m.tariffCount,unit:m.unit,individual:m.individual,replacesId:m.id});});
       if(m.notes)add(c,'p',m.notes,'muted');
       button(c,'Изменить данные / отметить поверку',()=>edit(m));
-      if(m.status!=='archived'&&['Холодная вода','Горячая вода'].includes(m.kind))button(c,'Внести показание',()=>{const s=el('registeredMeter');if(s&&[...s.options].some(o=>o.value===m.id)){s.value=m.id;s.dispatchEvent(new Event('change'));el('meterValue').focus();el('meterValue').scrollIntoView({block:'center'});}else alert('Для показаний добавьте соответствующий лицевой счёт водоканала или теплоснабжающей организации.');});
+      if(MeterValues.eligible(m))button(c,'Внести показание',()=>{const s=el('registeredMeter');if(s&&[...s.options].some(o=>o.value===m.id)){s.value=m.id;s.dispatchEvent(new Event('change'));el('meterValue').focus();el('meterValue').scrollIntoView({block:'center'});}else alert('Для показаний добавьте лицевой счёт с теми же поставщиком и номером, что указаны в карточке.');});
     });
     const seen=new Set();history().filter(r=>r.addressKey===addressKey()&&!meters.some(m=>matches(r,m))).forEach(r=>{const m={kind:r.kind,provider:r.provider,account:r.account,serial:r.meter};const id=identity(m);if(seen.has(id))return;seen.add(id);button(box,'Создать карточку из истории: '+r.kind+' · '+r.meter,()=>edit(m));});
     add(box,'p','Календарь: скачайте и импортируйте событие, затем проверьте оповещения в своём календаре. Поддержка напоминаний зависит от приложения и его настроек. Изменения срока здесь не обновляют уже импортированное событие — его нужно изменить отдельно.','muted');
@@ -127,11 +137,11 @@
     if(el('registeredMeter')){el('registeredMeter').previousElementSibling.remove();el('registeredMeter').remove();}
     const label=document.createElement('label');label.className='formlabel';label.htmlFor='registeredMeter';label.textContent='Сохранённый счётчик';
     const s=document.createElement('select');s.className='input';s.id='registeredMeter';
-    const available=meters.filter(m=>m.status!=='archived'&&['Холодная вода','Горячая вода'].includes(m.kind)&&['Водоканал','Нальчикская теплоснабжающая компания'].includes(m.provider)&&accounts.some(a=>a.provider===m.provider&&a.number===m.account));
+    const available=meters.filter(m=>MeterValues.eligible(m)&&accounts.some(a=>a.provider===m.provider&&a.number===m.account));
     [['','Ввести данные вручную'],...available.map(m=>[m.id,m.kind+' · '+m.serial+(m.location?' · '+m.location:'')])].forEach(([v,t])=>{const o=add(s,'option',t);o.value=v;});
     const anchor=el('meterAccount').previousElementSibling;anchor.before(label,s);
     if(available.some(m=>m.id===selected))s.value=selected;
-    s.onchange=()=>{const m=meters.find(m=>m.id===s.value);['meterAccount','meterNumber'].forEach(id=>el(id).disabled=!!m);if(!m){el('meterAccount').dispatchEvent(new Event('change'));return;}const options=[...el('meterAccount').options];const acc=accounts.filter(a=>['Водоканал','Нальчикская теплоснабжающая компания'].includes(a.provider));const index=acc.findIndex(a=>a.provider===m.provider&&a.number===m.account);if(index<0||!options[index])return;s.value=m.id;el('meterAccount').value=String(index);el('meterKind').value=m.kind;el('meterNumber').value=m.serial;el('meterValue').value='';const prev=previous(m.id);const f=el('meterFeedback');f.className='notice';f.textContent=prev?'Предыдущее сохранённое показание: '+prev.value+' м³':'Для этого счётчика показаний пока нет.';};
+    s.onchange=()=>{const m=meters.find(m=>m.id===s.value);['meterAccount','meterNumber'].forEach(id=>el(id).disabled=!!m);if(!m){el('meterAccount').dispatchEvent(new Event('change'));return;}const options=[...el('meterAccount').options];const acc=accounts;const index=acc.findIndex(a=>a.provider===m.provider&&a.number===m.account);if(index<0||!options[index])return;s.value=m.id;el('meterAccount').value=String(index);el('meterKind').value=m.kind;el('meterNumber').value=m.serial;window.MeterReadings.configure(m);el('meterValue').value='';const prev=previous(m.id);const f=el('meterFeedback');f.className='notice';f.textContent=prev?'Предыдущее сохранённое показание: '+MeterValues.format(prev):'Для этого счётчика показаний пока нет.';};
     ['meterAccount','meterNumber'].forEach(id=>el(id).disabled=!!s.value);
   }
   function renderHome() {
