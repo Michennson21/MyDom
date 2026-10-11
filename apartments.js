@@ -10,8 +10,12 @@
  try{registry=JSON.parse(localStorage.getItem(registryKey)||'null');if(registry&&(!Array.isArray(registry.homes)||!registry.homes.some(h=>h.id===registry.active)))throw Error('invalid registry');}
  catch(e){alert('Не удалось открыть список квартир. Существующие данные не изменены.');return;}
  if(!registry){registry={active:null,homes:[]};if(savedAddress){const id=crypto.randomUUID();registry={active:id,homes:[{id,address:savedAddress,data:snapshot()}]};try{localStorage.setItem(registryKey,JSON.stringify(registry));}catch(e){alert('Не удалось сохранить список квартир. Данные не изменены.');return;}}}
- const panel=document.createElement('div');panel.className='card';panel.id='apartmentSwitcher';document.querySelector('#home').prepend(panel);
- function render(){const addressButton=document.querySelector('#home .address button');if(addressButton)addressButton.textContent='Выбрать / добавить квартиру';panel.innerHTML='<label class="formlabel" for="activeApartment">Ваша квартира</label><div><select id="activeApartment" class="input">'+(registry.homes.length?registry.homes.map(h=>'<option value="'+h.id+'"'+(h.id===registry.active?' selected':'')+'>'+escapeHtml(h.address.street+', '+window.cleanHouseNumber(h.address.house)+(h.address.isPrivate?' · частный дом':', кв. '+h.address.apartment))+'</option>').join(''):'<option>Квартира не добавлена</option>')+'</select><button id="addApartment" class="btn secondary block">+ Квартира</button></div><div class="muted" style="margin-top:8px">Счета, начисления и показания относятся к выбранной квартире.</div>';
+ const addressCard=document.querySelector('#home .address');
+ const panel=document.createElement('div');panel.id='apartmentSwitcher';
+ addressCard.classList.add('with-apartment-switcher');
+ addressCard.querySelector('button').hidden=true;
+ addressCard.append(panel);
+ function render(){panel.innerHTML='<div><select id="activeApartment" class="input" aria-label="Выбрать квартиру"'+(registry.homes.length?'':' disabled')+'>'+(registry.homes.length?registry.homes.map(h=>'<option value="'+h.id+'"'+(h.id===registry.active?' selected':'')+'>'+escapeHtml(h.address.street+', '+window.cleanHouseNumber(h.address.house)+(h.address.isPrivate?' · частный дом':', кв. '+h.address.apartment))+'</option>').join(''):'<option>Квартира не добавлена</option>')+'</select><button id="addApartment" class="btn secondary block">+ Добавить квартиру</button></div><div class="apartment-note">Счета, начисления и показания относятся к выбранной квартире.</div>';
  document.getElementById('addApartment').onclick=()=>{openAddress();document.querySelector('#addressModal h3').textContent='Добавить квартиру';};
  document.getElementById('activeApartment').onchange=e=>switchTo(e.target.value);
  }
