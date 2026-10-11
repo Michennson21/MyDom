@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const hash=v=>createHash('sha256').update(v).digest('hex');
-const keys=new Set(['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory','mydomApartmentsV1','mydomWelcomeDone','mydomHouseEvents']);
+const keys=new Set(['mydomAddress','mydomAccounts','mydomManualBills','mydomResidentIssues','mydomWater','mydomMeterHistory','mydomMetersV1','mydomApartmentsV1','mydomWelcomeDone','mydomHouseEvents']);
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status});};
 export function createApp({database=process.env.DATABASE_PATH||'/data/mydom.sqlite',origin=process.env.APP_ORIGIN||'http://localhost:8080',invite=process.env.REGISTRATION_CODE||'',allowLocalRegistration=false,outagesPath=process.env.OUTAGES_PATH||''}={}){
  const url=new URL(origin);if(url.origin!==origin)throw Error('APP_ORIGIN must be an origin without a path');
