@@ -13,4 +13,9 @@ input,select,textarea,video,img{max-width:100%;min-width:0}
 @media(max-width:600px){input,select,textarea{font-size:16px}.quick-actions .grid{grid-template-columns:repeat(2,minmax(0,1fr))}.service-total{white-space:normal}.provider-actions{padding-left:0;flex-wrap:wrap}}
 @media(min-width:850px){#home.active{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr)}}
 
-@media(min-width:850px){#home>#apartmentSwitcher{grid-column:1/-1;grid-row:1}#home>.address{grid-row:4}#home>#homeStatus{grid-row:4 / span 2}}
+.address.with-apartment-switcher #addressTitle,.address.with-apartment-switcher #apartmentTitle{display:none}
+.address #activeApartment{margin:12px 0 16px;background:#244f49;color:#fff;border:1px solid #789c94;font-size:18px;font-weight:650;min-height:52px;width:100%}
+.address #activeApartment option{background:#fff;color:var(--ink)}
+.address #activeApartment:disabled{opacity:1;color:#d4e4df}
+.address .apartment-note{margin-top:12px;color:#d4e4df;font-size:13px}
+.address [hidden]{display:none!important}
