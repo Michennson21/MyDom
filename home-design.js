@@ -21,7 +21,7 @@
  if(el('houseEventsBlock'))outages.append(el('houseEventsBlock'));
  // Existing address selector keeps its native accessibility and apartment switch behavior.
  home.querySelector('.address').after(el('homeStatus'));el('homeStatus').after(attention);attention.after(services);services.after(outages);
- const info=add(el('homeinfo'),'div','','card');info.id='appInformation';add(info,'div','О приложении','title');const version=home.querySelector('.version-label');if(version){version.textContent='Тестовая версия · 0.36';info.append(version);}document.title='Мой дом — Нальчик v0.36';add(info,'p','Данные сохраняются в этом браузере. Серверная копия доступна только после подключения сервера. Сохранённые показания и обращения не отправляются поставщикам автоматически.','muted');
+ const info=add(el('homeinfo'),'div','','card');info.id='appInformation';add(info,'div','О приложении','title');const version=home.querySelector('.version-label');if(version){version.textContent='Тестовая версия · 0.37';info.append(version);}document.title='Мой дом — Нальчик v0.37';add(info,'p','Данные сохраняются в этом браузере. Серверная копия доступна только после подключения сервера. Сохранённые показания и обращения не отправляются поставщикам автоматически.','muted');
  function moveNotifications(){if(el('notificationPanel'))el('homeinfo').append(el('notificationPanel'));}
  const originalEnsure=ensureNotificationPanel;ensureNotificationPanel=function(){originalEnsure();moveNotifications();};moveNotifications();
  function renderSummary(){
@@ -48,7 +48,7 @@
  function attentionRow(title,detail,fn,type='bill',warning=false){const b=button(attention,'',fn,'home-attention-row'+(warning?' is-warning':''));const symbol=add(b,'span','','home-attention-icon');symbol.append(icon(type));const copy=add(b,'span','','home-attention-copy');add(copy,'strong',title);add(copy,'small',detail);b.append(icon('chevron'));}
  function renderAttention(){attention.replaceChildren();add(attention,'h2','Требует внимания');let count=0;
   if(savedAddress)for(const a of window.MeterRegistry?.alerts?.()||[]){attentionRow(a.title,a.detail,()=>go('meters'),'alert',true);count++;}
-  if(savedAddress&&residentIssues.length){attentionRow(residentIssues.length===1?'Обращение подготовлено':'Подготовленные обращения: '+residentIssues.length,'Не отправлено поставщику',()=>go('issues'));count++;}
+  if(savedAddress){const pending=residentIssues.filter(d=>d.lifecycle!=='resolved');if(pending.length){const labels={sent:'Отправлено · ожидается ответ',registered:'Зарегистрировано · ожидается ответ',answered:'Ответ получен · проверьте результат'};const one=pending[0];attentionRow(pending.length===1?(labels[one.lifecycle]?'Ход обращения':'Обращение подготовлено'):'Обращения в работе: '+pending.length,pending.length===1?(labels[one.lifecycle]||'Черновик · не отправлено поставщику'):'Откройте список, чтобы проверить статусы',()=>go('issues'));count++;}}
   const eventCount=savedAddress?el('houseEventsBlock')?.querySelectorAll('.event-card').length||0:0;
   if(eventCount){attentionRow('Сообщения по вашему адресу: '+eventCount,'Проверьте источник и сроки объявления',()=>{outages.open=true;outages.scrollIntoView({block:'start',behavior:'smooth'});},'alert',true);count++;}
   if(!count)add(attention,'p','По сохранённым данным напоминаний пока нет.','home-calm-note');

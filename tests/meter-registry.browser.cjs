@@ -4,7 +4,7 @@ const {chromium}=require('playwright'),http=require('http'),fs=require('fs'),pat
  const root=path.resolve(__dirname,'..'),server=http.createServer((q,r)=>{try{const f=path.join(root,q.url==='/'?'index.html':q.url);r.setHeader('Content-Type',f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':'text/html');r.end(fs.readFileSync(f));}catch(_){r.statusCode=404;r.end();}}).listen(8144);
  const browser=await chromium.launch({executablePath:process.env.QR_TEST_BROWSER||undefined,args:['--no-sandbox']});
  try {
- const p=await browser.newPage({viewport:{width:390,height:844}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+ const p=await browser.newPage({serviceWorkers:"block",viewport:{width:390,height:844}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.addInitScript(()=>localStorage.setItem('mydomWelcomeDone','1'));
  await p.goto('http://localhost:8144');await p.waitForFunction(()=>!!window.HomeDesign);
  await p.evaluate(()=>{const a={street:'ул. Тестовая',house:'1',apartment:'2'};localStorage.setItem('mydomAddress',JSON.stringify(a));localStorage.setItem('mydomAccounts',JSON.stringify([{provider:'Водоканал',number:'00123'}]));localStorage.setItem('mydomMeterHistory',JSON.stringify([{id:'old',addressKey:JSON.stringify([a.street,a.house,a.apartment]),provider:'Водоканал',account:'00123',meter:'W001',kind:'Холодная вода',value:100,createdAt:'2026-01-01T00:00:00Z'}]));});

@@ -15,7 +15,7 @@ function renderWelcome(){
  document.getElementById('welcomeTitle').setAttribute('tabindex','-1');document.getElementById('welcomeTitle').focus();
 }
 function nextWelcome(){if(welcomeStep===1&&!savedAddress){document.getElementById('welcomeError').textContent='Сначала выберите адрес или закройте знакомство, чтобы сделать это позже.';return;}if(welcomeStep===3){closeWelcome(true);go('home');return;}welcomeStep++;renderWelcome();}
-async function closeWelcome(completed){if(completed){try{await SafeStore.commit({mydomWelcomeDone:'1'});}catch(e){}}welcome.classList.remove('show');document.querySelector('.app').inert=false;}
+async function closeWelcome(completed){if(completed){try{await SafeStore.commit({mydomWelcomeDone:'1'});}catch(e){document.getElementById('welcomeError').textContent='Не удалось сохранить завершение настройки. Повторите попытку.';return;}}welcome.classList.remove('show');document.querySelector('.app').inert=false;}
 const welcomeSaveAddress=saveAddress;saveAddress=async function(){await welcomeSaveAddress();if(welcome.classList.contains('show')&&!document.getElementById('addressModal').classList.contains('show'))renderWelcome();};
 const welcomeSaveAccount=saveAccount;saveAccount=async function(){await welcomeSaveAccount();if(welcome.classList.contains('show')&&!document.getElementById('accountModal').classList.contains('show'))renderWelcome();};
 if(!localStorage.getItem('mydomWelcomeDone')&&!savedAddress&&!accounts.length&&!manualBills.length)startWelcome();
