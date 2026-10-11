@@ -9,7 +9,7 @@
   const label=document.createElement('label');label.textContent='Восстановить из резервной копии: ';const input=document.createElement('input');input.type='file';input.accept='.json,application/json';label.append(input);panel.append(label);input.onchange=async()=>{try{const f=input.files[0];if(!f)return;if(f.size>2*1024*1024)throw Error('Файл больше 2 МБ');const data=BackupSchema.backup(JSON.parse(await f.text()));if(!confirm('Заменить данные проверенной копией? Исходные данные сохранятся в резервной записи.'))return;await SafeStore.replace(data);location.reload();}catch(e){p.textContent=e.message;}finally{input.value='';}};
   const reload=document.createElement('button');reload.className='btn secondary';reload.textContent='Повторить загрузку';reload.onclick=()=>location.reload();panel.append(reload);
  }
- try{await SafeStore.init();}catch(e){recovery(e);return;}
+ try{if(!window.Billing)throw Error('Не удалось загрузить модуль начислений. Проверьте соединение и повторите загрузку.');await SafeStore.init();}catch(e){recovery(e);return;}
  for(const original of document.querySelectorAll('script[data-app-core]')){const script=document.createElement('script');script.textContent=original.textContent;document.body.append(script);}
  app.inert=false;
  for(const src of ['vendor/jsQR-1.4.0.js','vendor/zxing-0.21.3.min.js','vendor/zxing-wasm-3.1.5.js','qr.js','welcome.js']){
