@@ -38,3 +38,5 @@ body{background:var(--paper)}.app{max-width:1000px}.top{padding:18px 24px 14px;d
 @media(min-width:850px){#home.active{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:0 24px;align-items:start}#home>.address{grid-column:1/-1;grid-row:1}#home>#homeStatus{grid-column:1;grid-row:2}#home>.home-attention{grid-column:2;grid-row:2}#home>.home-services{grid-column:1;grid-row:3}#home>.home-outages{grid-column:2;grid-row:3}}
 @media(max-width:600px){.top{padding:16px 18px 12px}.content{padding:8px 16px 110px}.nav{width:100%;max-width:100%}.card{padding:18px}.home-total{font-size:36px}.home-primary-actions .btn{font-size:13px}.home-primary-actions .btn svg{width:23px}.home-service-row{gap:9px}.home-service-amount{font-size:13px}.home-services .card{padding:0 13px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+#meterHistory .service-total{white-space:normal;overflow-wrap:anywhere;max-width:100%;font-size:18px}#meterHistory .row{flex-wrap:wrap}
